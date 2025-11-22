@@ -45,5 +45,4 @@ coverage.xml
 .ruff_cache/
 .python-version
 .env
-.env.*
 .trae
