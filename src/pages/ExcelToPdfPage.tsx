@@ -1,33 +1,34 @@
 import { useCallback, useMemo, useState } from 'react'
 import type { ChangeEvent, DragEvent } from 'react'
 import { Link } from 'react-router-dom'
-import { uploadExcelFile } from '../lib/backend'
-import type { UploadExcelResult } from '../lib/backend'
+import { uploadExcelFile, uploadMultipleExcelFiles } from '../lib/backend'
+import type { UploadExcelResult, UploadExcelItemResult } from '../lib/backend'
 import '../App.css'
 
 type ConvertStatus = 'idle' | 'loading' | 'success' | 'error'
 
 function ExcelToPdfPage() {
-  const [file, setFile] = useState<File | null>(null)
+  const [files, setFiles] = useState<File[]>([])
   const [status, setStatus] = useState<ConvertStatus>('idle')
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [result, setResult] = useState<UploadExcelResult | null>(null)
+  const [batchResults, setBatchResults] = useState<UploadExcelItemResult[] | null>(null)
 
   const cleanState = useCallback(() => {
     setStatus('idle')
     setErrorMessage(null)
     setResult(null)
+    setBatchResults(null)
   }, [])
 
   const handleFileSelection = useCallback(
-    (inputFile: File | null) => {
-      if (!inputFile) {
-        setFile(null)
+    (inputFiles: File[] | null) => {
+      if (!inputFiles || inputFiles.length === 0) {
+        setFiles([])
         cleanState()
         return
       }
-
-      setFile(inputFile)
+      setFiles(inputFiles)
       cleanState()
     },
     [cleanState],
@@ -35,8 +36,8 @@ function ExcelToPdfPage() {
 
   const processFileInput = useCallback(
     (event: ChangeEvent<HTMLInputElement>) => {
-      const selected = event.target.files?.[0] ?? null
-      void handleFileSelection(selected)
+      const list = event.target.files ? Array.from(event.target.files) : []
+      void handleFileSelection(list)
     },
     [handleFileSelection],
   )
@@ -44,8 +45,8 @@ function ExcelToPdfPage() {
   const handleDrop = useCallback(
     (event: DragEvent<HTMLLabelElement>) => {
       event.preventDefault()
-      const dropped = event.dataTransfer.files?.[0] ?? null
-      void handleFileSelection(dropped)
+      const droppedList = event.dataTransfer.files ? Array.from(event.dataTransfer.files) : []
+      void handleFileSelection(droppedList)
     },
     [handleFileSelection],
   )
@@ -55,24 +56,19 @@ function ExcelToPdfPage() {
     event.dataTransfer.dropEffect = 'copy'
   }, [])
 
-  const fileInfo = useMemo(() => {
-    if (!file) {
-      return null
-    }
-
-    const sizeInKb = (file.size / 1024).toFixed(1)
-
-    return {
-      name: file.name,
-      type: file.type || 'Formato Excel',
-      size: `${sizeInKb} KB`,
-      lastModified: new Date(file.lastModified).toLocaleString('pt-BR'),
-    }
-  }, [file])
+  const fileListInfo = useMemo(() => {
+    if (!files.length) return []
+    return files.map((f) => ({
+      name: f.name,
+      size: `${(f.size / 1024).toFixed(1)} KB`,
+      lastModified: new Date(f.lastModified).toLocaleString('pt-BR'),
+      type: f.type || 'Formato Excel',
+    }))
+  }, [files])
 
   const handleConvert = useCallback(async () => {
-    if (!file) {
-      setErrorMessage('Selecione um arquivo Excel antes de converter.')
+    if (!files.length) {
+      setErrorMessage('Selecione ao menos um arquivo Excel antes de converter.')
       setStatus('error')
       return
     }
@@ -81,19 +77,24 @@ function ExcelToPdfPage() {
     setErrorMessage(null)
 
     try {
-      const uploadResult = await uploadExcelFile(file)
-      setResult(uploadResult)
+      if (files.length === 1) {
+        const uploadResult = await uploadExcelFile(files[0])
+        setResult(uploadResult)
+      } else {
+        const results = await uploadMultipleExcelFiles(files)
+        setBatchResults(results)
+      }
       setStatus('success')
     } catch (error) {
-      console.error('Falha na conversão do arquivo', error)
+      console.error('Falha na conversão de arquivos', error)
       setErrorMessage(
         error instanceof Error
           ? error.message
-          : 'Não foi possível converter o arquivo. Tente novamente ou verifique a biblioteca de conversão.',
+          : 'Não foi possível converter os arquivos. Tente novamente ou verifique a biblioteca de conversão.',
       )
       setStatus('error')
     }
-  }, [file])
+  }, [files])
 
   return (
     <div className="page">
@@ -119,6 +120,7 @@ function ExcelToPdfPage() {
               id="excel-input"
               type="file"
               accept=".xlsx,.xls,.xlsm,.xltx,.csv"
+              multiple
               onChange={processFileInput}
               hidden
             />
@@ -127,17 +129,27 @@ function ExcelToPdfPage() {
             <span className="dropzone__hint">Formatos aceitos: .xlsx, .xls, .xlsm, .xltx, .csv</span>
           </label>
 
-          {fileInfo && (
+          {fileListInfo.length > 0 && (
             <section className="file-info">
-              <div>
-                <strong>Arquivo:</strong> {fileInfo.name}
-              </div>
-              <div>
-                <strong>Tamanho:</strong> {fileInfo.size}
-              </div>
-              <div>
-                <strong>Última modificação:</strong> {fileInfo.lastModified}
-              </div>
+              <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
+                {fileListInfo.map((info) => (
+                  <li
+                    key={info.name}
+                    style={{
+                      background: '#fff',
+                      borderRadius: 12,
+                      padding: '10px 12px',
+                      boxShadow: '0 3px 8px rgba(15,23,42,0.06)',
+                      border: '1px solid #e2e8f0',
+                    }}
+                  >
+                    <div style={{ fontWeight: 600 }}>{info.name}</div>
+                    <small style={{ color: '#64748b' }}>
+                      Tamanho: {info.size} • Modificado: {info.lastModified}
+                    </small>
+                  </li>
+                ))}
+              </ul>
             </section>
           )}
 
@@ -146,7 +158,7 @@ function ExcelToPdfPage() {
               className="actions__primary"
               type="button"
               onClick={handleConvert}
-              disabled={!file || status === 'loading'}
+              disabled={!files.length || status === 'loading'}
             >
               {status === 'loading' ? 'Convertendo...' : 'Converter para PDF'}
             </button>
@@ -154,16 +166,16 @@ function ExcelToPdfPage() {
               className="actions__secondary"
               type="button"
               onClick={() => {
-                void handleFileSelection(null)
+                void handleFileSelection([])
               }}
-              disabled={!file || status === 'loading'}
+              disabled={!files.length || status === 'loading'}
             >
               Limpar
             </button>
           </div>
 
           {status === 'error' && errorMessage && <p className="feedback feedback--error">{errorMessage}</p>}
-          {status === 'success' && result && (
+          {status === 'success' && result && files.length === 1 && (
             <section className="feedback feedback--success upload-result">
               <p>Upload concluído e dados processados com sucesso pelo backend.</p>
               {result.certificadoNumero && (
@@ -192,6 +204,35 @@ function ExcelToPdfPage() {
               </details>
             </section>
           )}
+          {status === 'success' && batchResults && files.length > 1 && (
+            <section className="feedback feedback--success upload-result">
+              <p>Arquivos processados. Veja o status de cada item abaixo:</p>
+              <div className="option-grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))' }}>
+                {batchResults.map((item) => (
+                  <div key={item.fileName} className="option-grid__item" style={{ background: '#fff', borderRadius: 12, padding: 12 }}>
+                    <div style={{ fontWeight: 700 }}>{item.fileName}</div>
+                    <div style={{ color: item.ok ? '#16a34a' : '#dc2626' }}>
+                      {item.ok ? 'Processado com sucesso' : `Erro: ${item.error}`}
+                    </div>
+                    {item.ok && item.result && (
+                      <div className="download-links" style={{ marginTop: 6 }}>
+                        {item.result.downloadUrls.pdf && (
+                          <a href={item.result.downloadUrls.pdf} className="download-link" download>
+                            Baixar PDF
+                          </a>
+                        )}
+                        {item.result.downloadUrls.planilha && (
+                          <a href={item.result.downloadUrls.planilha} className="download-link" download>
+                            Baixar planilha
+                          </a>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </section>
+          )}
         </section>
       </main>
 
@@ -206,4 +247,3 @@ function ExcelToPdfPage() {
 }
 
 export default ExcelToPdfPage
-
