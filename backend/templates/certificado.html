@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="utf-8" />
+    <title>Certificado de Controle de Pragas — {{ certificate.numero_certificado }}</title>
+    {% if certificate.id %}
+    <meta name="certificado-id" content="{{ certificate.id }}" />
+    {% endif %}
+    <link rel="stylesheet" href="certificado.css" />
+</head>
+
+<body>
+    <main class="page">
+        <!-- Cabeçalho -->
+        <header class="header">
+            <div class="header__left">
+                {% if logo_url %}
+                <img src="{{ logo_url }}" alt="Logo" class="header__logo" />
+                {% endif %}
+                <div class="header__company">
+                    <span class="tag">{{ certificate.razao_social }}</span>
+                    {% if certificate.bairro %}
+                    <div class="kv"><b>Bairro:</b>{{ certificate.bairro }}</div>
+                    {% endif %}
+                    {% if certificate.cidade %}
+                    <div class="kv"><b>Cidade:</b>{{ certificate.cidade }}</div>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="header__right">
+                <div class="kv"><span class="badge">{{ certificate.numero_certificado }}</span>
+                </div>
+                {% for item in certificate_meta %}
+                {% if item.label != "Nº Certificado" and item.label != "Processado" %}
+                <div class="kv"><b>{{ item.label }}:</b>{{ item.value }}</div>
+                {% endif %}
+                {% endfor %}
+            </div>
+        </header>
+
+        <div class="generated">{{ certificate_meta[4].value }}</div>
+        {% if certificate.id %}
+        <div class="id-hidden" data-cert-id="{{ certificate.id }}"></div>
+        {% endif %}
+        {% if certificate.id %}
+        <div class="id-stamp">ID: {{ certificate.id }}</div>
+        {% endif %}
+
+        <div class="title">
+            <h1>Certificado de Controle de Pragas</h1>
+        </div>
+
+        <!-- Cliente (tabela unificada com tipo de praga) -->
+        <section class="section">
+            <h2>Cliente</h2>
+            <table class="table-cliente">
+                <tbody>
+                    <tr>
+                        <td class="label">RAZÃO SOCIAL</td>
+                        <td class="value">{{ cliente_rows[0].value }}</td>
+                        <td class="praga-label">TIPO DE PRAGA</td>
+                    </tr>
+                    <tr>
+                        <td class="label">NOME FANTASIA</td>
+                        <td class="value">{{ cliente_rows[1].value }}</td>
+                        <td class="praga-value" rowspan="4">{{ certificate.pragas }}</td>
+                    </tr>
+                    <tr>
+                        <td class="label">CNPJ</td>
+                        <td class="value">{{ certificate.cnpj }}</td>
+                    </tr>
+                    <tr>
+                        <td class="label">ENDEREÇO</td>
+                        <td class="value">{{ cliente_rows[2].value }}</td>
+                    </tr>
+                    {% if certificate.valor %}
+                    <tr>
+                        <td class="label">VALOR DO SERVIÇO</td>
+                        <td class="value"><strong>{{ certificate.valor }}</strong></td>
+                    </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </section>
+
+        <!-- Prazos -->
+        <section class="section">
+            <h2>Prazos</h2>
+            <table>
+                <tbody>
+                    {% for row in prazos_rows %}
+                    <tr>
+                        <td class="label">{{ row.label|upper }}</td>
+                        <td class="value">{{ row.value }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </section>
+
+        <!-- Produtos Químicos Aplicados -->
+        <section class="section">
+            <h2>Produtos Químicos Aplicados</h2>
+            {% if produtos %}
+            <table>
+                <thead>
+                    <tr>
+                        <th>Produto</th>
+                        <th>Classe química</th>
+                        <th style="text-align:center;">Concentração</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for produto in produtos %}
+                    <tr>
+                        <td class="value">{{ produto.nome }}</td>
+                        <td class="value">{{ produto.classe }}</td>
+                        <td class="number">{{ produto.concentracao }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <div class="empty-state">Nenhum produto químico informado</div>
+            {% endif %}
+        </section>
+
+        <!-- Métodos de Aplicação -->
+        <section class="section">
+            <h2>Métodos de Aplicação</h2>
+            {% if metodos %}
+            <table>
+                <thead>
+                    <tr>
+                        <th>Método</th>
+                        <th style="text-align:center;">Quantidade</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for metodo in metodos %}
+                    <tr>
+                        <td class="value">{{ metodo.nome }}</td>
+                        <td class="number">{{ metodo.quantidade }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <div class="empty-state">Nenhum método de aplicação informado</div>
+            {% endif %}
+        </section>
+
+        <!-- Assinatura -->
+        <div class="signature">
+            <div class="line"></div>
+            <small>ASSINATURA</small>
+            <small>Data: {{ certificate_meta[2].value }}</small>
+        </div>
+    </main>
+</body>
+
+</html>
