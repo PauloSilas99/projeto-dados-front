@@ -31,6 +31,30 @@ export interface UploadExcelResult {
     planilha: string | null
   }
   certificadoNumero: string | null
+  certificadoId?: string | null
+}
+
+export interface UploadExcelItemResult {
+  fileName: string
+  ok: boolean
+  result?: UploadExcelResult
+  error?: string
+}
+
+export interface CertificateFilters {
+  id?: string
+  bairro?: string
+  cidade?: string
+  minValor?: number
+  maxValor?: number
+  limit?: number
+  offset?: number
+}
+
+export interface CertificateListItem {
+  certificado: Record<string, unknown>
+  urls: Record<string, string>
+  arquivos: Record<string, unknown>
 }
 
 function extractCertificateNumber(certificado: Record<string, unknown> | undefined): string | null {
@@ -57,6 +81,20 @@ function extractCertificateNumber(certificado: Record<string, unknown> | undefin
     }
   }
 
+  return null
+}
+
+function extractCertificateId(certificado: Record<string, unknown> | undefined): string | null {
+  if (!certificado) {
+    return null
+  }
+  const value = certificado['id' as keyof typeof certificado]
+  if (typeof value === 'string' && value.trim()) {
+    return value.trim()
+  }
+  if (typeof value === 'number') {
+    return String(value)
+  }
   return null
 }
 
@@ -101,29 +139,30 @@ export async function uploadExcelFile(file: File): Promise<UploadExcelResult> {
   const formData = new FormData()
   formData.append('arquivo', file)
 
-  const response = await fetch(`${API_BASE_URL}/upload-excel`, {
+  const response = await fetch(`${API_BASE_URL}/certificados/upload-excel`, {
     method: 'POST',
     body: formData,
   })
 
-  if (!response.ok) {
-    const errorText = await response.text().catch(() => null)
-    throw new Error(
-      errorText
-        ? `Falha ao enviar o arquivo para o backend: ${response.status} ${response.statusText} - ${errorText}`
-        : `Falha ao enviar o arquivo para o backend: ${response.status} ${response.statusText}`,
-    )
+  const text = await response.text()
+  let parsed: any
+  try {
+    parsed = JSON.parse(text)
+  } catch {
+    throw new Error(text || `Erro ${response.status} no backend`)
   }
 
-  const contentType = response.headers.get('content-type') ?? ''
-
-  if (!contentType.includes('application/json')) {
-    throw new Error('O backend retornou um formato inesperado. Esperado JSON.')
+  if (parsed?.sucesso === false) {
+    throw new Error(parsed.message || 'Erro desconhecido no servidor')
   }
 
-  const data = (await response.json()) as UploadExcelResponse
+  if (!parsed?.data) {
+    throw new Error('Resposta inválida do servidor: dados ausentes')
+  }
+  const data = parsed.data as UploadExcelResponse
 
   const certificadoNumero = extractCertificateNumber(data.certificado)
+  const certificadoId = extractCertificateId(data.certificado)
 
   const arquivos = data.arquivos
   const arquivosUrls =
@@ -147,15 +186,19 @@ export async function uploadExcelFile(file: File): Promise<UploadExcelResult> {
 
   const pdfDownloadUrl =
     resolveBackendUrl(pdfUrlFromResponse) ??
-    (certificadoNumero
-      ? resolveBackendUrl(`/certificados/${encodeURIComponent(certificadoNumero)}/pdf`)
-      : null)
+    (certificadoId
+      ? resolveBackendUrl(`/certificados/${encodeURIComponent(certificadoId)}/pdf`)
+      : certificadoNumero
+        ? resolveBackendUrl(`/certificados/${encodeURIComponent(certificadoNumero)}/pdf`)
+        : null)
 
   const planilhaDownloadUrl =
     resolveBackendUrl(planilhaUrlFromResponse) ??
-    (certificadoNumero
-      ? resolveBackendUrl(`/certificados/${encodeURIComponent(certificadoNumero)}/planilha`)
-      : null)
+    (certificadoId
+      ? resolveBackendUrl(`/certificados/${encodeURIComponent(certificadoId)}/planilha`)
+      : certificadoNumero
+        ? resolveBackendUrl(`/certificados/${encodeURIComponent(certificadoNumero)}/planilha`)
+        : null)
 
   return {
     data,
@@ -164,6 +207,51 @@ export async function uploadExcelFile(file: File): Promise<UploadExcelResult> {
       planilha: ensureEncodedCertificatePath(planilhaDownloadUrl, certificadoNumero),
     },
     certificadoNumero,
+    certificadoId,
+  }
+}
+
+export async function uploadMultipleExcelFiles(files: File[]): Promise<UploadExcelItemResult[]> {
+  const tasks = files.map(async (f) => {
+    try {
+      const r = await uploadExcelFile(f)
+      return { fileName: f.name, ok: true, result: r } as UploadExcelItemResult
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : 'Falha ao enviar o arquivo'
+      return { fileName: f.name, ok: false, error: msg } as UploadExcelItemResult
+    }
+  })
+  return Promise.all(tasks)
+}
+
+export async function listCertificates(filters: CertificateFilters = {}, signal?: AbortSignal): Promise<CertificateListItem[]> {
+  const params = new URLSearchParams()
+  if (filters.id) params.set('id', filters.id.trim())
+  if (filters.bairro) params.set('bairro', filters.bairro.trim())
+  if (filters.cidade) params.set('cidade', filters.cidade.trim())
+  if (typeof filters.minValor === 'number') params.set('min_valor', String(filters.minValor))
+  if (typeof filters.maxValor === 'number') params.set('max_valor', String(filters.maxValor))
+  params.set('limit', String(filters.limit ?? 100))
+  params.set('offset', String(filters.offset ?? 0))
+  const response = await fetch(`${API_BASE_URL}/certificados?${params.toString()}`, { signal })
+  {
+    const text = await response.text()
+    let parsed: any
+    try {
+      parsed = JSON.parse(text)
+    } catch {
+      throw new Error(text || `Erro ${response.status} ao listar certificados`)
+    }
+
+    if (parsed?.sucesso === false) {
+      throw new Error(parsed.message || 'Erro ao listar certificados')
+    }
+
+    if (!parsed?.data) {
+      throw new Error('Resposta inválida do servidor: dados ausentes')
+    }
+    const data = parsed.data as CertificateListItem[]
+    return Array.isArray(data) ? data : []
   }
 }
 
@@ -204,24 +292,25 @@ export async function createManualCertificate(
     body: JSON.stringify(payload),
   })
 
-  if (!response.ok) {
-    const errorText = await response.text().catch(() => null)
-    throw new Error(
-      errorText
-        ? `Falha ao criar certificado: ${response.status} ${response.statusText} - ${errorText}`
-        : `Falha ao criar certificado: ${response.status} ${response.statusText}`,
-    )
+  const text = await response.text()
+  let parsed: any
+  try {
+    parsed = JSON.parse(text)
+  } catch {
+    throw new Error(text || `Erro ${response.status} no backend`)
   }
 
-  const contentType = response.headers.get('content-type') ?? ''
-
-  if (!contentType.includes('application/json')) {
-    throw new Error('O backend retornou um formato inesperado. Esperado JSON.')
+  if (parsed?.sucesso === false) {
+    throw new Error(parsed.message || 'Erro ao criar certificado manual')
   }
 
-  const data = (await response.json()) as UploadExcelResponse
+  if (!parsed?.data) {
+    throw new Error('Resposta inválida do servidor: dados ausentes')
+  }
+  const data = parsed.data as UploadExcelResponse
 
   const certificadoNumero = extractCertificateNumber(data.certificado)
+  const certificadoId = extractCertificateId(data.certificado)
 
   const arquivos = data.arquivos
   const arquivosUrls =
@@ -245,15 +334,19 @@ export async function createManualCertificate(
 
   const pdfDownloadUrl =
     resolveBackendUrl(pdfUrlFromResponse) ??
-    (certificadoNumero
-      ? resolveBackendUrl(`/certificados/${encodeURIComponent(certificadoNumero)}/pdf`)
-      : null)
+    (certificadoId
+      ? resolveBackendUrl(`/certificados/${encodeURIComponent(certificadoId)}/pdf`)
+      : certificadoNumero
+        ? resolveBackendUrl(`/certificados/${encodeURIComponent(certificadoNumero)}/pdf`)
+        : null)
 
   const planilhaDownloadUrl =
     resolveBackendUrl(planilhaUrlFromResponse) ??
-    (certificadoNumero
-      ? resolveBackendUrl(`/certificados/${encodeURIComponent(certificadoNumero)}/planilha`)
-      : null)
+    (certificadoId
+      ? resolveBackendUrl(`/certificados/${encodeURIComponent(certificadoId)}/planilha`)
+      : certificadoNumero
+        ? resolveBackendUrl(`/certificados/${encodeURIComponent(certificadoNumero)}/planilha`)
+        : null)
 
   return {
     data,
@@ -262,8 +355,27 @@ export async function createManualCertificate(
       planilha: ensureEncodedCertificatePath(planilhaDownloadUrl, certificadoNumero),
     },
     certificadoNumero,
+    certificadoId,
   }
 }
 
 export { resolveBackendUrl }
 
+export async function getCacheStatus(): Promise<any> {
+  const response = await fetch(`${API_BASE_URL}/api/admin/cache-status`)
+  if (!response.ok) {
+    throw new Error(await response.text())
+  }
+  const json = await response.json()
+  return json.data || json
+}
+
+export async function clearCache(): Promise<void> {
+  const response = await fetch(`${API_BASE_URL}/api/admin/clear-cache`, {
+    method: 'POST',
+  })
+  if (!response.ok) {
+    throw new Error(await response.text())
+  }
+  await response.json()
+}
