@@ -1,0 +1,29 @@
+[project]
+name = "servidor-pdf"
+version = "0.1.0"
+description = "Backend FastAPI para certificados com geração de PDF e planilhas"
+requires-python = ">=3.11"
+dependencies = [
+    "fastapi>=0.110",
+    "uvicorn>=0.30",
+    "python-multipart>=0.0.9",
+    "engine-excel-to-pdf @ git+https://github.com/JulianoL13/engine-excel-to-pdf.git",
+]
+
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+package-dir = {"" = "."}
+
+[tool.setuptools.packages.find]
+include = ["backend*"]
+exclude = ["templates*", "uploads*", "outputs*"]
+
+[tool.uv]
+python-preference = "managed"
+dev-dependencies = [
+    "pytest>=8",
+    "httpx>=0.27",
+]
