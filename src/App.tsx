@@ -7,6 +7,9 @@ import ExcelToPdfPage from './pages/ExcelToPdfPage'
 import PdfAnalyticsPage from './pages/PdfAnalyticsPage'
 import ManualFormPage from './pages/ManualFormPage'
 import AiImprovementsPage from './pages/AiImprovementsPage'
+import AdminCachePage from './pages/AdminCachePage'
+import AdminHomePage from './pages/AdminHomePage'
+import AdminPdfsPage from './pages/AdminPdfsPage'
 import './App.css'
 
 const companyProfile = {
@@ -61,6 +64,30 @@ function App() {
             element={
               <ProtectedRoute>
                 <AiImprovementsPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin"
+            element={
+              <ProtectedRoute>
+                <AdminHomePage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/cache"
+            element={
+              <ProtectedRoute>
+                <AdminCachePage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/pdfs"
+            element={
+              <ProtectedRoute>
+                <AdminPdfsPage />
               </ProtectedRoute>
             }
           />
