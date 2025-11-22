@@ -33,26 +33,38 @@ export type CertificadoAnalytics = {
   distribuicaoMetodos: Array<{ metodo: string; quantidade: number }>
 }
 
-async function handleResponse<T>(response: Response): Promise<T> {
-  if (!response.ok) {
-    const message = await response.text()
-    throw new Error(message || `Erro ${response.status} ao consultar o dashboard`)
+type ApiEnvelope<T> = { message: string; data: T; sucesso: boolean } | { message: string; erro?: any; sucesso: boolean }
+
+async function readEnvelope<T>(response: Response): Promise<T> {
+  const text = await response.text()
+  let parsed: ApiEnvelope<T>
+  try {
+    parsed = JSON.parse(text) as ApiEnvelope<T>
+  } catch {
+    throw new Error(text || `Erro ${response.status} ao consultar o dashboard`)
   }
-  return response.json() as Promise<T>
+  if ((parsed as any)?.sucesso === true && (parsed as any)?.data !== undefined) {
+    return (parsed as any).data as T
+  }
+  const msg = (parsed as any)?.message || `Erro ${response.status}`
+  const detalhes = (parsed as any)?.erro?.detalhes
+  throw new Error(detalhes ? `${msg} - ${typeof detalhes === 'string' ? detalhes : JSON.stringify(detalhes)}` : msg)
 }
 
 export async function fetchDashboardOverview(signal?: AbortSignal): Promise<OverviewResponse> {
   const response = await fetch(`${API_BASE}/dashboard/overview`, { signal })
-  return handleResponse<OverviewResponse>(response)
+  return readEnvelope<OverviewResponse>(response)
 }
 
-export async function fetchDashboardCertificado(
-  numero: string,
+ 
+
+export async function fetchDashboardCertificadoById(
+  id: string,
   signal?: AbortSignal,
 ): Promise<CertificadoAnalytics> {
-  const encoded = encodeURIComponent(numero.trim())
-  const response = await fetch(`${API_BASE}/dashboard/certificado?numero=${encoded}`, { signal })
-  return handleResponse<CertificadoAnalytics>(response)
+  const encoded = encodeURIComponent(id.trim())
+  const response = await fetch(`${API_BASE}/dashboard/certificado?id=${encoded}`, { signal })
+  return readEnvelope<CertificadoAnalytics>(response)
 }
 
 
