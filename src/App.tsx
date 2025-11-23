@@ -10,6 +10,7 @@ import AiImprovementsPage from './pages/AiImprovementsPage'
 import AdminCachePage from './pages/AdminCachePage'
 import AdminHomePage from './pages/AdminHomePage'
 import AdminPdfsPage from './pages/AdminPdfsPage'
+import HeatmapPage from './pages/HeatmapPage'
 import './App.css'
 
 const companyProfile = {
@@ -88,6 +89,14 @@ function App() {
             element={
               <ProtectedRoute>
                 <AdminPdfsPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/heatmap"
+            element={
+              <ProtectedRoute>
+                <HeatmapPage />
               </ProtectedRoute>
             }
           />

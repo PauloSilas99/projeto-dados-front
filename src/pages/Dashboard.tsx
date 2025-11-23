@@ -54,6 +54,12 @@ function DashboardPage({ company }: DashboardProps) {
         description: 'Acesse a central de ferramentas administrativas.',
         route: '/admin',
         status: 'Ferramentas administrativas',
+      },
+      {
+        title: 'Mapa de Calor',
+        description: 'Visualize a distribuição geográfica dos certificados por cidade.',
+        route: '/heatmap',
+        status: 'Disponível agora',
       }
     ],
     [],
