@@ -1,4 +1,0 @@
-fastapi
-uvicorn
-python-multipart
-git+https://github.com/JulianoL13/engine-excel-to-pdf.git
