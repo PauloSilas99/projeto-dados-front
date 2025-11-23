@@ -8,6 +8,7 @@ dependencies = [
     "uvicorn>=0.30",
     "python-multipart>=0.0.9",
     "engine-excel-to-pdf @ git+https://github.com/JulianoL13/engine-excel-to-pdf.git",
+    "httpx>=0.27",
 ]
 
 [build-system]
