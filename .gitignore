@@ -46,3 +46,6 @@ coverage.xml
 .python-version
 .env
 .trae
+data
+results
+outputs

@@ -8,13 +8,13 @@ services:
       - "8000:8000"
     volumes:
       - ./backend:/app/backend
-      - ./backend/outputs:/app/backend/outputs
-      - ./backend/uploads:/app/backend/uploads
-      - ./backend/results:/app/backend/results
-    environment:
-      - PYTHONUNBUFFERED=1
+      - ./outputs:/app/outputs
+      - ./uploads:/app/uploads
     env_file:
       - .env
+    environment:
+      - PYTHONUNBUFFERED=1
+      - ENGINE_OUTPUT_DIR=/app/outputs
     restart: unless-stopped
     networks:
       - projeto-dados-network

@@ -14,17 +14,19 @@ RUN apt-get update && apt-get install -y \
     shared-mime-info \
     && rm -rf /var/lib/apt/lists/*
 
-COPY backend/requirements.txt /app/requirements.txt
+COPY backend/pyproject.toml /app/backend/pyproject.toml
 COPY .env /app/.env
 
-RUN pip install --no-cache-dir -r requirements.txt
-
+# Copy backend source code first to install dependencies
 COPY backend/ /app/backend/
 
+# Install dependencies from pyproject.toml
+RUN pip install --no-cache-dir -e backend
+
 # Resolve output directories based on .env
-RUN set -a && . /app/.env && set +a && \
-    mkdir -p ${ENGINE_OUTPUT_DIR} /app/backend/uploads /app/backend/results
+# Create necessary directories explicitly
+RUN mkdir -p /app/outputs/pdfs /app/outputs/planilhas /app/uploads /app/results
 
 EXPOSE 8000
 
-CMD ["uvicorn", "backend.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+CMD ["uvicorn", "backend.infrastructure.http.server:create_app", "--factory", "--host", "0.0.0.0", "--port", "8000", "--reload"]

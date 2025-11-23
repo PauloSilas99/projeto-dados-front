@@ -13,7 +13,7 @@ install:
 	npm install
 	@echo "🐍 Instalando dependências do backend..."
 	python3 -m venv .venv
-	.venv/bin/pip install -r backend/requirements.txt
+	.venv/bin/pip install -e backend
 	@echo "✅ Instalação completa!"
 
 frontend:
@@ -22,7 +22,7 @@ frontend:
 
 backend:
 	@echo "🐍 Iniciando backend em http://localhost:8000"
-	.venv/bin/uvicorn backend.main:app --reload --port 8000
+	.venv/bin/uvicorn backend.infrastructure.http.server:create_app --factory --reload --port 8000
 
 dev:
 	@echo "🚀 Iniciando frontend e backend..."
