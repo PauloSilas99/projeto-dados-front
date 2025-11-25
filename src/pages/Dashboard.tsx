@@ -33,29 +33,29 @@ function DashboardPage({ company }: DashboardProps) {
   const actionCards = useMemo(
     () => [
       {
-        title: 'Preencher formulário manual',
+        title: 'Certificado Manual',
         description: 'Cadastre certificados preenchendo um formulário completo com todos os dados necessários.',
         route: '/formulario-manual',
         status: 'Disponível agora',
       },
       {
-        title: 'Transformar Excel em PDF',
+        title: 'Certificado Automático',
         description: 'Automatize a geração de certificados e relatórios com o fluxo já disponível.',
         route: '/excel-pdf',
         status: 'Disponível agora',
       },
       {
-        title: 'Visualizar dados consolidados',
+        title: 'Dados Estatísticos',
         description: 'Explore os PDFs produzidos em gráficos e indicadores.',
         route: '/dados-pdfs',
         status: 'Protótipo em desenvolvimento',
       },
-      {
-        title: 'Administração',
-        description: 'Acesse a central de ferramentas administrativas.',
-        route: '/admin',
-        status: 'Ferramentas administrativas',
-      },
+      // {
+      //   title: 'Administração',
+      //   description: 'Acesse a central de ferramentas administrativas.',
+      //   route: '/admin',
+      //   status: 'Ferramentas administrativas',
+      // },
       {
         title: 'Mapa de Calor',
         description: 'Visualize a distribuição geográfica dos certificados por cidade.',
@@ -94,7 +94,25 @@ function DashboardPage({ company }: DashboardProps) {
     <div className="dashboard">
       <AppHeader companyName={company.name} showWelcome />
 
-      <section className="analytics__totals" style={{ marginTop: '1.5rem' }}>
+      <section className="dashboard__actions">
+        {actionCards.map((card) => (
+          <button
+            key={card.route}
+            type="button"
+            className="dashboard__action-card"
+            onClick={() => navigate(card.route)}
+          >
+            <div>
+              {/* <p className="dashboard__action-status">{card.status}</p> */}
+              <h3>{card.title}</h3>
+              <p>{card.description}</p>
+            </div>
+            <span className="dashboard__action-cta">Acessar →</span>
+          </button>
+        ))}
+      </section>
+
+      <section className="analytics__totals">
         {loadingOverview && <span>Carregando totais...</span>}
         {!loadingOverview && overview && (
           <>
@@ -114,36 +132,7 @@ function DashboardPage({ company }: DashboardProps) {
         )}
       </section>
 
-      <section className="dashboard__company-card">
-        <header>
-          <div>
-            <p className="dashboard__company-label">Empresa logada</p>
-            <h2>{company.name}</h2>
-          </div>
-          <div className="dashboard__stats">
-            <div>
-              <span>Segmento</span>
-              <strong>{company.segment}</strong>
-            </div>
-            <div>
-              <span>Operações acompanhadas</span>
-              <strong>{company.operations}</strong>
-            </div>
-          </div>
-        </header>
-        <ul className="dashboard__info-list">
-          <li>
-            <span>CNPJ</span>
-            <strong>{company.cnpj}</strong>
-          </li>
-          <li>
-            <span>Contato</span>
-            <strong>{company.contactEmail}</strong>
-          </li>
-        </ul>
-      </section>
-
-      <section className="analytics__grid" style={{ marginTop: '1.5rem' }}>
+      <section className="analytics__grid">
         <div className="chart-card" style={{ gridColumn: '1 / -1' }}>
           <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
             <div>
@@ -239,23 +228,6 @@ function DashboardPage({ company }: DashboardProps) {
         </div>
       </section>
 
-      <section className="dashboard__actions">
-        {actionCards.map((card) => (
-          <button
-            key={card.route}
-            type="button"
-            className="dashboard__action-card"
-            onClick={() => navigate(card.route)}
-          >
-            <div>
-              {/* <p className="dashboard__action-status">{card.status}</p> */}
-              <h3>{card.title}</h3>
-              <p>{card.description}</p>
-            </div>
-            <span className="dashboard__action-cta">Acessar →</span>
-          </button>
-        ))}
-      </section>
     </div>
   )
 }

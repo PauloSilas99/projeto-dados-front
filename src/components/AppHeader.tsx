@@ -1,4 +1,4 @@
-import { Link, useLocation } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useTheme } from '../contexts/ThemeContext'
 import '../App.css'
 
@@ -10,6 +10,7 @@ type AppHeaderProps = {
 export default function AppHeader({ companyName, showWelcome = false }: AppHeaderProps) {
   const { theme, toggleTheme } = useTheme()
   const location = useLocation()
+  const navigate = useNavigate()
   const isDashboard = location.pathname === '/'
 
   return (
@@ -80,6 +81,30 @@ export default function AppHeader({ companyName, showWelcome = false }: AppHeade
               />
             </svg>
           )}
+        </button>
+        <button
+          type="button"
+          className="app-header__user-btn"
+          onClick={() => navigate('/perfil')}
+          title="Acessar perfil do usuário"
+          aria-label="Acessar perfil do usuário"
+        >
+          <svg
+            width="20"
+            height="20"
+            viewBox="0 0 20 20"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M10 10C12.7614 10 15 7.76142 15 5C15 2.23858 12.7614 0 10 0C7.23858 0 5 2.23858 5 5C5 7.76142 7.23858 10 10 10Z"
+              fill="currentColor"
+            />
+            <path
+              d="M10 12C5.58172 12 2 13.7909 2 16V20H18V16C18 13.7909 14.4183 12 10 12Z"
+              fill="currentColor"
+            />
+          </svg>
         </button>
       </div>
     </section>
