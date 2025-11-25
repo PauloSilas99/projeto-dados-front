@@ -1,5 +1,5 @@
 import { Fragment, useEffect, useMemo, useState } from 'react'
-import { Link } from 'react-router-dom'
+import AppHeader from '../components/AppHeader'
 import {
   Bar,
   BarChart,
@@ -19,6 +19,8 @@ import {
 } from '../lib/dashboard'
 import { listCertificates } from '../lib/backend'
 import '../App.css'
+
+const COMPANY_NAME = 'SC Solutions'
 
 const isAbortError = (error: unknown): error is DOMException =>
   error instanceof DOMException && error.name === 'AbortError'
@@ -311,11 +313,9 @@ function PdfAnalyticsPage() {
 
   return (
     <div className="analytics-page">
+      <AppHeader companyName={COMPANY_NAME} />
       <header className="analytics__header">
         <div>
-          <p className="subpage-nav">
-            <Link to="/">← Voltar para o dashboard</Link>
-          </p>
           <h1>Dados consolidados dos PDFs</h1>
           <p>
             Consulte o panorama geral dos certificados emitidos e investigue indicadores específicos puxando um número de

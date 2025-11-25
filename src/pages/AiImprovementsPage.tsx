@@ -1,14 +1,14 @@
-import { Link } from 'react-router-dom'
+import AppHeader from '../components/AppHeader'
 import '../App.css'
+
+const COMPANY_NAME = 'SC Solutions'
 
 function AiImprovementsPage() {
   return (
     <div className="placeholder-page">
+      <AppHeader companyName={COMPANY_NAME} />
       <header className="placeholder-page__header">
         <div>
-          <p className="subpage-nav">
-            <Link to="/">← Voltar para o dashboard</Link>
-          </p>
           <h1>Melhorias com IA</h1>
           <p>
             Esta área será dedicada a recomendações inteligentes que apontam gargalos, oportunidades de automação e

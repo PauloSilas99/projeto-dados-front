@@ -1,7 +1,10 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
+import AppHeader from '../components/AppHeader'
 import { clearCache, getCacheStatus } from '../lib/backend'
 import '../App.css'
+
+const COMPANY_NAME = 'SC Solutions'
 
 function AdminCachePage() {
   const [status, setStatus] = useState<any>(null)
@@ -42,11 +45,9 @@ function AdminCachePage() {
 
   return (
     <div className="page">
+      <AppHeader companyName={COMPANY_NAME} />
       <header className="page__header">
         <div>
-          <p className="subpage-nav">
-            <Link to="/admin">← Voltar para Administração</Link>
-          </p>
           <h1>Gerenciamento de Cache</h1>
           <p>Limpe caches do cliente e do servidor.</p>
         </div>

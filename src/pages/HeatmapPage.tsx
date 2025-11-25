@@ -1,9 +1,11 @@
 import { useEffect, useState, useRef } from 'react'
-import { Link } from 'react-router-dom'
+import AppHeader from '../components/AppHeader'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 import 'leaflet.heat'
 import '../App.css'
+
+const COMPANY_NAME = 'SC Solutions'
 
 type HeatmapItem = {
     city: string
@@ -112,11 +114,9 @@ function HeatmapPage() {
 
     return (
         <div className="page">
+            <AppHeader companyName={COMPANY_NAME} />
             <header className="page__header">
                 <div>
-                    <p className="subpage-nav">
-                        <Link to="/">← Voltar para o dashboard</Link>
-                    </p>
                     <h1>Mapa de Calor - Distribuição Geográfica</h1>
                     <p>Visualização interativa dos certificados por localização (cidade + bairro).</p>
                 </div>

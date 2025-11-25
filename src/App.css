@@ -2,26 +2,34 @@
   display: flex;
   flex-direction: column;
   min-height: 100vh;
+  padding: 2.5rem clamp(1rem, 4vw, 4rem) 3rem;
   background: linear-gradient(180deg, #f4f7fb 0%, #ffffff 60%);
   color: #1f2933;
   position: relative;
+  gap: 2rem;
 }
 
-
-.page__header,
-.page__footer {
-  padding: 2rem 1.5rem;
-  text-align: center;
+.page__header {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  text-align: left;
 }
 
 .page__header h1 {
   margin: 0 0 0.5rem;
-  font-size: clamp(2rem, 2.5vw + 1rem, 2.8rem);
+  font-size: clamp(2rem, 3vw, 3rem);
 }
 
 .page__header p {
   margin: 0;
-  color: #52606d;
+  max-width: 620px;
+  color: #475569;
+}
+
+.page__footer {
+  padding: 2rem 1.5rem;
+  text-align: center;
 }
 
 .page__content {
@@ -29,7 +37,7 @@
   display: flex;
   align-items: stretch;
   justify-content: center;
-  padding: 0 1.5rem 3rem;
+  padding: 0;
 }
 
 .card {
@@ -537,7 +545,7 @@
 
 .dashboard {
   min-height: 100vh;
-  padding: 2.5rem clamp(1rem, 4vw, 4rem);
+  padding: 2.5rem clamp(1rem, 4vw, 4rem) 3rem;
   background: linear-gradient(180deg, #eef2ff 0%, #f8fafc 45%, #ffffff 100%);
   color: #0f172a;
   display: flex;
@@ -553,7 +561,71 @@
   display: flex;
   flex-wrap: wrap;
   justify-content: space-between;
+  align-items: center;
   gap: 1.5rem;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.app-header__actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-shrink: 0;
+}
+
+.app-header__home-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.625rem 1rem;
+  background: rgba(255, 255, 255, 0.15);
+  color: #fff;
+  text-decoration: none;
+  border-radius: 10px;
+  font-weight: 600;
+  font-size: 0.9rem;
+  transition: all 0.2s ease;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  white-space: nowrap;
+}
+
+.app-header__home-btn:hover {
+  background: rgba(255, 255, 255, 0.25);
+  transform: translateY(-1px);
+}
+
+.app-header__home-btn svg {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+}
+
+.app-header__theme-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  background: rgba(255, 255, 255, 0.15);
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  padding: 0;
+  flex-shrink: 0;
+}
+
+.app-header__theme-btn:hover {
+  background: rgba(255, 255, 255, 0.25);
+  transform: scale(1.05);
+}
+
+.app-header__theme-btn svg {
+  width: 20px;
+  height: 20px;
+  display: block;
 }
 
 .dashboard__eyebrow {
@@ -739,20 +811,29 @@
 
 .placeholder-page {
   min-height: 100vh;
-  padding: 2.5rem clamp(1rem, 4vw, 4rem);
+  padding: 2.5rem clamp(1rem, 4vw, 4rem) 3rem;
   background: linear-gradient(180deg, #fef3c7 0%, #ffffff 50%);
   color: #0f172a;
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.placeholder-page__header {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
 }
 
 .placeholder-page__header h1 {
   margin: 0 0 0.5rem;
-  font-size: clamp(2rem, 2.8vw, 3rem);
+  font-size: clamp(2rem, 3vw, 3rem);
 }
 
 .placeholder-page__header p {
   margin: 0;
   color: #475569;
-  max-width: 720px;
+  max-width: 620px;
 }
 
 .placeholder-card {

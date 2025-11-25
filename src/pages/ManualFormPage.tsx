@@ -1,9 +1,11 @@
 import { useState, useCallback } from 'react'
 import type { FormEvent } from 'react'
-import { Link } from 'react-router-dom'
+import AppHeader from '../components/AppHeader'
 import { createManualCertificate, type ManualFormPayload } from '../lib/backend'
 import type { UploadExcelResult } from '../lib/backend'
 import '../App.css'
+
+const COMPANY_NAME = 'SC Solutions'
 
 type Produto = {
   nome_produto: string
@@ -131,11 +133,9 @@ function ManualFormPage() {
 
   return (
     <div className="page">
+      <AppHeader companyName={COMPANY_NAME} />
       <header className="page__header">
         <div>
-          <p className="subpage-nav">
-            <Link to="/">← Voltar para o dashboard</Link>
-          </p>
           <h1>Formulário Manual</h1>
           <p>Preencha todos os dados necessários para gerar o certificado em PDF.</p>
         </div>

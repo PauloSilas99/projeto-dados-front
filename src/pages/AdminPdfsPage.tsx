@@ -1,5 +1,8 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
+import AppHeader from '../components/AppHeader'
+
+const COMPANY_NAME = 'SC Solutions'
 
 const API_BASE = import.meta.env.VITE_API_URL?.replace(/\/+$/, '') || 'http://127.0.0.1:8000'
 
@@ -141,11 +144,9 @@ function AdminPdfsPage() {
 
   return (
     <div className="analytics-page">
+      <AppHeader companyName={COMPANY_NAME} />
       <header className="analytics__header">
         <div>
-          <p className="subpage-nav">
-            <Link to="/admin">← Voltar para Administração</Link>
-          </p>
           <h1>Documentos PDF</h1>
           <p>Gerencie visualização, download e exclusão de PDFs gerados.</p>
         </div>

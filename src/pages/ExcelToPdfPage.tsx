@@ -1,9 +1,11 @@
 import { useCallback, useMemo, useState } from 'react'
 import type { ChangeEvent, DragEvent } from 'react'
-import { Link } from 'react-router-dom'
+import AppHeader from '../components/AppHeader'
 import { uploadExcelFile, uploadMultipleExcelFiles } from '../lib/backend'
 import type { UploadExcelResult, UploadExcelItemResult } from '../lib/backend'
 import '../App.css'
+
+const COMPANY_NAME = 'SC Solutions'
 
 type ConvertStatus = 'idle' | 'loading' | 'success' | 'error'
 
@@ -98,11 +100,9 @@ function ExcelToPdfPage() {
 
   return (
     <div className="page">
+      <AppHeader companyName={COMPANY_NAME} />
       <header className="page__header">
         <div>
-          <p className="subpage-nav">
-            <Link to="/">← Voltar para o dashboard</Link>
-          </p>
           <h1>Excel para PDF</h1>
           <p>Faça upload da planilha, escolha as opções e gere o PDF com apenas um clique.</p>
         </div>

@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import AppHeader from '../components/AppHeader'
 import '../App.css'
 import { fetchDashboardOverview, type OverviewResponse } from '../lib/dashboard'
 import { listCertificates } from '../lib/backend'
@@ -91,13 +92,7 @@ function DashboardPage({ company }: DashboardProps) {
 
   return (
     <div className="dashboard">
-      <section className="dashboard__hero">
-        <div>
-          <p className="dashboard__eyebrow">Bem-vindo(a) de volta</p>
-          <h1>{company.name}</h1>
-          <p>Centralize suas operações e avance para as próximas etapas de análise e automação.</p>
-        </div>
-      </section>
+      <AppHeader companyName={company.name} showWelcome />
 
       <section className="analytics__totals" style={{ marginTop: '1.5rem' }}>
         {loadingOverview && <span>Carregando totais...</span>}

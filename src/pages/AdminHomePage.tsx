@@ -1,6 +1,9 @@
 import { useMemo } from 'react'
-import { useNavigate, Link } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
+import AppHeader from '../components/AppHeader'
 import '../App.css'
+
+const COMPANY_NAME = 'SC Solutions'
 
 function AdminHomePage() {
   const navigate = useNavigate()
@@ -25,11 +28,9 @@ function AdminHomePage() {
 
   return (
     <div className="analytics-page">
+      <AppHeader companyName={COMPANY_NAME} />
       <header className="analytics__header">
         <div>
-          <p className="subpage-nav">
-            <Link to="/">← Voltar para o dashboard</Link>
-          </p>
           <h1>Administração</h1>
           <p>Central de ferramentas administrativas do sistema.</p>
         </div>
