@@ -117,7 +117,7 @@ function HeatmapPage() {
             <AppHeader companyName={COMPANY_NAME} />
             <header className="page__header">
                 <div>
-                    <h1>Mapa de Calor - Distribuição Geográfica</h1>
+                    <h2>Mapa de Calor - Distribuição Geográfica</h2>
                     <p>Visualização interativa dos certificados por localização (cidade + bairro).</p>
                 </div>
             </header>

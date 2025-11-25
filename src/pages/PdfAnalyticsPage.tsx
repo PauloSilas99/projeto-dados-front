@@ -316,7 +316,7 @@ function PdfAnalyticsPage() {
       <AppHeader companyName={COMPANY_NAME} />
       <header className="analytics__header">
         <div>
-          <h1>Dados consolidados dos PDFs</h1>
+          <h2>Dados consolidados dos PDFs</h2>
           <p>
             Consulte o panorama geral dos certificados emitidos e investigue indicadores específicos puxando um número de
             certificado.
@@ -388,11 +388,12 @@ function PdfAnalyticsPage() {
       </section>
 
       <section className="analytics__certificado">
-        <header>
+        <header className="certificado-header">
           <div>
             <h2>Investigar certificado específico</h2>
             <p>Busque por ID e aplique filtros por bairro, cidade e faixa de valor.</p>
           </div>
+          
           <div className="certificado-search">
             <input
               type="text"
@@ -449,6 +450,7 @@ function PdfAnalyticsPage() {
               />
             </div>
           </div>
+          
           <div className="actions">
             <button className="actions__secondary" type="button" onClick={handleBuscarLista}>
               Aplicar filtros na lista
