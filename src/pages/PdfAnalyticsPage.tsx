@@ -316,7 +316,7 @@ function PdfAnalyticsPage() {
       <AppHeader companyName={COMPANY_NAME} />
       <header className="analytics__header">
         <div>
-          <h2>Dados consolidados dos PDFs</h2>
+          <h2>Dados Estatísticos</h2>
           <p>
             Consulte o panorama geral dos certificados emitidos e investigue indicadores específicos puxando um número de
             certificado.

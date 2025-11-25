@@ -136,7 +136,7 @@ function ManualFormPage() {
       <AppHeader companyName={COMPANY_NAME} />
       <header className="page__header">
         <div>
-          <h2>Formulário Manual</h2>
+          <h2>Certificado Manual</h2>
           <p>Preencha todos os dados necessários para gerar o certificado em PDF.</p>
         </div>
       </header>

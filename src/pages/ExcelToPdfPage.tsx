@@ -103,7 +103,7 @@ function ExcelToPdfPage() {
       <AppHeader companyName={COMPANY_NAME} />
       <header className="page__header">
         <div>
-          <h2>Excel para PDF</h2>
+          <h2>Certificado Automático</h2>
           <p>Faça upload da planilha, escolha as opções e gere o PDF com apenas um clique.</p>
         </div>
       </header>

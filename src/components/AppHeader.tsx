@@ -20,7 +20,7 @@ export default function AppHeader({ companyName, showWelcome = false }: AppHeade
           {showWelcome && <p className="dashboard__eyebrow">Bem-vindo(a) de volta</p>}
           <h1>{companyName}</h1>
           {showWelcome && (
-            <p>Centralize suas operações e avance para as próximas etapas de análise e automação.</p>
+            <p>Centralize seus certificados e avance para as próximas etapas de análise e automação.</p>
           )}
         </div>
       </div>
