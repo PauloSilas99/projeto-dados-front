@@ -10,11 +10,11 @@ GET /certificados
 ```
 
 **Query Parameters:**
-- `id` (optional): Filter by certificate ID
-- `bairro` (optional): Filter by neighborhood
-- `cidade` (optional): Filter by city
-- `min_valor` (optional): Minimum value filter
-- `max_valor` (optional): Maximum value filter
+- `id` (optional): Filter by certificate ID (case-insensitive)
+- `bairro` (optional): Filter by neighborhood (case-insensitive, equals)
+- `cidade` (optional): Filter by city (case-insensitive; equals, prefix or contains)
+- `min_valor` (optional): Minimum value filter (parsing `R$`, milhares e vírgula)
+- `max_valor` (optional): Maximum value filter (parsing `R$`, milhares e vírgula)
 - `limit` (optional, default: 100): Number of results
 - `offset` (optional, default: 0): Pagination offset
 
@@ -116,7 +116,7 @@ POST /certificados/upload-excel
 
 **Request:**
 - Content-Type: `multipart/form-data`
-- Field: `file` (Excel file)
+- Field: `arquivo` (Excel file)
 
 **Response:**
 ```json
@@ -186,13 +186,6 @@ GET /certificados/{id}/planilha
 **Response:** Binary Excel file
 
 ---
-
-### Download Planilha Consolidada
-```http
-GET /certificados/planilha-consolidada
-```
-
-**Response:** Binary Excel file with all certificates
 
 ---
 
@@ -300,11 +293,11 @@ GET /dashboard/heatmap
 
 ---
 
-## 🔧 Admin
+## 🔧 Admin (prefixo `/api/admin`)
 
 ### Cache Status
 ```http
-GET /admin/cache/status
+GET /api/admin/cache-status
 ```
 
 **Response:**
@@ -324,7 +317,7 @@ GET /admin/cache/status
 
 ### Clear Cache
 ```http
-POST /admin/cache/clear
+POST /api/admin/clear-cache
 ```
 
 **Response:**
@@ -344,8 +337,21 @@ POST /admin/cache/clear
 
 ### Listar PDFs
 ```http
-GET /admin/pdfs
+GET /api/admin/pdfs
 ```
+
+**Query Parameters:**
+- `q` (optional): Busca por nome parcial (case-insensitive)
+- `doc_type` (optional): Tipo do documento; atualmente apenas `documento` é válido (outros valores são ignorados)
+- `data_de` (optional): Data mínima de criação
+- `data_ate` (optional): Data máxima de criação
+- `limit` (optional, default: 50): Número de resultados
+- `offset` (optional, default: 0): Deslocamento da paginação
+
+Aceita formatos de data:
+- `YYYY-MM-DD` (interpreta início/fim do dia automaticamente)
+- `YYYY-MM-DDTHH:MM`
+- `YYYY-MM-DDTHH:MM:SS`
 
 **Response:**
 ```json
@@ -354,16 +360,57 @@ GET /admin/pdfs
   "data": [
     {
       "name": "240_25-KJ.pdf",
-      "relpath": "pdfs/240_25-KJ.pdf",
+      "relpath": "240_25-KJ.pdf",
       "size_bytes": 102400,
       "size_human": "100.0 KB",
-      "modified_at": "2025-01-15 10:30:00",
-      "doc_type": "pdf",
-      "status": "ok"
+      "modified_at": "2025-01-15T10:30:00+00:00",
+      "doc_type": "documento",
+      "status": "available"
     }
   ],
-  "message": "Lista de PDFs recuperada"
+  "message": "Lista de PDFs"
 }
+```
+
+### Preview de PDF
+```http
+GET /api/admin/pdfs/preview?name={relpath}
+```
+
+**Response:** Binary PDF file
+
+### Download de PDF por nome
+```http
+GET /api/admin/pdfs/download?name={relpath}
+```
+
+**Response:** Binary PDF file
+
+### Download ZIP de PDFs
+```http
+POST /api/admin/pdfs/download-zip
+```
+
+**Request Body:**
+```json
+{ "names": ["240_25-KJ.pdf", "outro.pdf"] }
+```
+
+**Response:** Binary ZIP file (`documentos.zip`)
+
+### Excluir PDFs
+```http
+DELETE /api/admin/pdfs
+```
+
+**Request Body:**
+```json
+{ "names": ["240_25-KJ.pdf"] }
+```
+
+**Response:**
+```json
+{ "sucesso": true, "data": { "deleted": 1 }, "message": "Arquivos removidos" }
 ```
 
 ---
@@ -375,10 +422,10 @@ All endpoints may return error responses in this format:
 ```json
 {
   "sucesso": false,
-  "erro": {
+  "message": "Descrição do erro",
+  "error": {
     "codigo": "VALIDATION_ERROR",
-    "mensagem": "Descrição do erro",
-    "detalhes": { /* optional */ }
+    "detalhes": { }
   }
 }
 ```
@@ -400,12 +447,12 @@ CORS is enabled for all origins (`*`). In production, configure `BACKEND_CORS_OR
 
 ## 📝 Notes
 
-1. All datetime fields are returned in ISO 8601 format: `YYYY-MM-DDTHH:MM:SS`
-2. File paths in responses are absolute server paths
-3. Use the `urls` object for client-side navigation/downloads
-4. The heatmap endpoint uses OpenStreetMap Nominatim for geocoding (rate-limited, cached)
-5. Excel uploads must be `.xlsx`, `.xls`, `.xlsm`, `.xltx`, or `.csv`
+1. All datetime fields are returned in ISO 8601 format (ex.: `2025-01-15T10:30:00+00:00`)
+2. File paths in responses são caminhos absolutos no servidor, exceto `relpath` em Admin PDFs
+3. Use o objeto `urls` para navegação/download no cliente
+4. O endpoint de heatmap usa OpenStreetMap Nominatim (rate-limited, com cache)
+5. Uploads de Excel aceitam `.xlsx` e `.xls`
 
 ---
 
-**Last Updated:** 2025-11-23
+**Last Updated:** 2025-11-26

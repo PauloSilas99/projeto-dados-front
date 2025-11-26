@@ -55,12 +55,14 @@ class UploadExcelUseCase:
 
             pdf_path = await asyncio.to_thread(pdf_service.ensure_pdf, bundle, self.pdf_engine)
 
+            cert_id = certificado.to_dict().get("id")
+
             return CertificateCreatedDTO(
-                id=certificado.to_dict().get("id"),
+                id=cert_id,
                 numero_certificado=str(certificado.numero_certificado),
                 planilha_path=planilha_path,
                 pdf_path=pdf_path,
-                bundle=bundle
+                bundle=bundle,
             )
 
         finally:

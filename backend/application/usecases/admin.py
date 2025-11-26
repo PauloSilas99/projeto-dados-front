@@ -60,27 +60,40 @@ class ListPdfsUseCase:
         base = self.pdf_engine.get_pdf_generator().output_dir
         files = sorted(base.glob("**/*.pdf"), key=lambda p: p.stat().st_mtime, reverse=True)
 
+        def _parse_date(val: str, is_end: bool = False) -> Optional[datetime]:
+            s = val.strip()
+            if not s:
+                return None
+            try:
+                # Full ISO
+                return datetime.fromisoformat(s)
+            except Exception:
+                pass
+            try:
+                # Date-only
+                d = datetime.fromisoformat(s + "T00:00:00")
+                if is_end:
+                    # end of day: add 23:59:59
+                    return d.replace(hour=23, minute=59, second=59)
+                return d
+            except Exception:
+                return None
+
+        ts_de = _parse_date(data_de or "") if data_de else None
+        ts_ate = _parse_date(data_ate or "", is_end=True) if data_ate else None
+
         def _match(p: Path) -> bool:
             name = p.name
             if q and q.strip() and q.strip().lower() not in name.lower():
                 return False
-            tipo = "certificado" if "cert" in name.lower() or "certificado" in name.lower() else "documento"
-            if doc_type and doc_type.strip().lower() != tipo:
+            # Simplificação: todo arquivo é tratado como documento; ignora filtro doc_type diferente de 'documento'
+            if doc_type and doc_type.strip().lower() not in ("", "documento"):
                 return False
-            if data_de:
-                try:
-                    ts_de = datetime.fromisoformat(data_de)
-                    if datetime.fromtimestamp(p.stat().st_mtime) < ts_de:
-                        return False
-                except Exception:
-                    pass
-            if data_ate:
-                try:
-                    ts_ate = datetime.fromisoformat(data_ate)
-                    if datetime.fromtimestamp(p.stat().st_mtime) > ts_ate:
-                        return False
-                except Exception:
-                    pass
+            mtime = datetime.fromtimestamp(p.stat().st_mtime)
+            if ts_de and mtime < ts_de:
+                return False
+            if ts_ate and mtime > ts_ate:
+                return False
             return True
 
         filtrados = [p for p in files if _match(p)]
@@ -93,7 +106,7 @@ class ListPdfsUseCase:
                 "size_bytes": p.stat().st_size,
                 "size_human": self._size_human(p.stat().st_size),
                 "modified_at": datetime.fromtimestamp(p.stat().st_mtime, tz=timezone.utc).isoformat(),
-                "doc_type": "certificado" if "cert" in p.name.lower() or "certificado" in p.name.lower() else "documento",
+                "doc_type": "documento",
                 "status": "available",
             }
             for p in page

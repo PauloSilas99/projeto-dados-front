@@ -22,19 +22,43 @@ class ListCertificatesUseCase:
         certificados = await asyncio.to_thread(self.repository.list)
         
         filtrados: List[Dict[str, Any]] = []
+        def _norm(s: Any) -> str:
+            try:
+                return str(s).strip().lower()
+            except Exception:
+                return ""
+
         for c in certificados:
             data = c.to_dict()
-            if id and str(data.get("id", "")) != id:
+            if id and _norm(data.get("id", "")) != _norm(id):
                 continue
-            if bairro and str(data.get("bairro", "")).strip().lower() != bairro.strip().lower():
+            if bairro and _norm(data.get("bairro", "")) != _norm(bairro):
                 continue
-            if cidade and str(data.get("cidade", "")).strip().lower() != cidade.strip().lower():
-                continue
+            # cidade: permitir startswith e contains para maior flexibilidade
+            if cidade:
+                dc = _norm(data.get("cidade", ""))
+                qc = _norm(cidade)
+                if not (dc == qc or dc.startswith(qc) or qc in dc):
+                    continue
             v_raw = data.get("valor")
-            try:
-                v = float(str(v_raw).replace(",", ".")) if v_raw is not None and str(v_raw).strip() != "" else None
-            except Exception:
-                v = None
+            def _to_float(val: Any) -> float | None:
+                if val is None:
+                    return None
+                s = str(val).strip()
+                if not s:
+                    return None
+                s = s.replace("R$", "").replace(" ", "")
+                # Trata formatos brasileiros com separador de milhar
+                if "," in s and "." in s:
+                    s = s.replace(".", "").replace(",", ".")
+                elif "," in s and s.count(",") == 1 and s.rfind(",") > s.rfind("."):
+                    s = s.replace(",", ".")
+                try:
+                    return float(s)
+                except Exception:
+                    return None
+
+            v = _to_float(v_raw)
             if min_valor is not None and (v is None or v < min_valor):
                 continue
             if max_valor is not None and (v is None or v > max_valor):

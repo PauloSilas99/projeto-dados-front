@@ -64,14 +64,24 @@ function AdminPdfsPage() {
   const load = () => {
     setLoading(true)
     setError(null)
+    console.log('AdminPdfs filters state:', {
+      q,
+      docType,
+      dataDe,
+      dataAte,
+      limit,
+      offset,
+    })
     const params = new URLSearchParams()
     if (q.trim()) params.set('q', q.trim())
     if (docType.trim()) params.set('doc_type', docType.trim())
-    if (dataDe.trim()) params.set('data_de', dataDe.trim())
-    if (dataAte.trim()) params.set('data_ate', dataAte.trim())
+    if (dataDe.trim()) params.set('data_de', `${dataDe.trim()}T00:00:00`)
+    if (dataAte.trim()) params.set('data_ate', `${dataAte.trim()}T23:59:59`)
     params.set('limit', String(limit))
     params.set('offset', String(offset))
-    fetch(`${API_BASE}/api/admin/pdfs?${params.toString()}`)
+    const url = `${API_BASE}/api/admin/pdfs?${params.toString()}`
+    console.log('AdminPdfs load URL:', url)
+    fetch(url)
       .then(async (res) => {
         const text = await res.text()
         const parsed = JSON.parse(text)
@@ -169,11 +179,21 @@ function AdminPdfsPage() {
             </div>
             <div className="option-grid__item">
               <label className="option-group__label">Criado de</label>
-              <input className="option-group__input" type="datetime-local" value={dataDe} onChange={(e) => setDataDe(e.target.value)} />
+              <input
+                className="option-group__input"
+                type="date"
+                value={dataDe}
+                onChange={(e) => setDataDe(e.target.value)}
+              />
             </div>
             <div className="option-grid__item">
               <label className="option-group__label">Criado até</label>
-              <input className="option-group__input" type="datetime-local" value={dataAte} onChange={(e) => setDataAte(e.target.value)} />
+              <input
+                className="option-group__input"
+                type="date"
+                value={dataAte}
+                onChange={(e) => setDataAte(e.target.value)}
+              />
             </div>
             <div className="option-grid__item">
               <label className="option-group__label">Página</label>
@@ -185,7 +205,28 @@ function AdminPdfsPage() {
             </div>
           </div>
           <div className="actions">
-            <button className="actions__secondary" onClick={load}>Aplicar filtros</button>
+            <button
+              className="actions__secondary"
+              onClick={() => {
+                setOffset(0)
+                setTimeout(load, 0)
+              }}
+            >
+              Aplicar filtros
+            </button>
+          </div>
+          <div style={{ marginTop: 8, color: '#64748b', fontSize: '0.85rem' }}>
+            <span>Query atual: </span>
+            <code>{(() => {
+              const p = new URLSearchParams()
+              if (q.trim()) p.set('q', q.trim())
+              if (docType.trim()) p.set('doc_type', docType.trim())
+              if (dataDe.trim()) p.set('data_de', dataDe.trim())
+              if (dataAte.trim()) p.set('data_ate', dataAte.trim())
+              p.set('limit', String(limit))
+              p.set('offset', String(offset))
+              return `/api/admin/pdfs?${p.toString()}`
+            })()}</code>
           </div>
         </div>
 
