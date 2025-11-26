@@ -1,4 +1,5 @@
 import { Fragment, useEffect, useMemo, useState } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
 import AppHeader from '../components/AppHeader'
 import {
   Bar,
@@ -43,17 +44,54 @@ type ChartSectionProps = {
   data: Array<{ label: string; value: number }>
   variant?: ChartVariant
   height?: number
+  actionButton?: {
+    label: string
+    onClick: () => void
+  }
 }
 
-function ChartSection({ title, description, data, variant = 'column', height = 260 }: ChartSectionProps) {
+function ChartSection({ title, description, data, variant = 'column', height = 260, actionButton }: ChartSectionProps) {
   const layout = variant === 'bar' ? 'vertical' : 'horizontal'
   const barColor = variant === 'bar' ? 'var(--chart-secondary, #7c3aed)' : 'var(--chart-primary, #2563eb)'
 
   return (
     <section className={`chart-card ${variant === 'bar' ? 'chart-card--bar' : ''}`}>
       <header>
-        <h3>{title}</h3>
-        {description && <p>{description}</p>}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '1rem', flexWrap: 'wrap' }}>
+          <div style={{ flex: 1 }}>
+            <h3>{title}</h3>
+            {description && <p>{description}</p>}
+          </div>
+          {actionButton && (
+            <button
+              type="button"
+              onClick={actionButton.onClick}
+              style={{
+                padding: '0.5rem 1rem',
+                background: 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)',
+                color: '#fff',
+                border: 'none',
+                borderRadius: '8px',
+                fontSize: '0.875rem',
+                fontWeight: 600,
+                cursor: 'pointer',
+                transition: 'all 0.2s ease',
+                whiteSpace: 'nowrap',
+                boxShadow: '0 2px 8px rgba(37, 99, 235, 0.3)',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform = 'translateY(-2px)'
+                e.currentTarget.style.boxShadow = '0 4px 12px rgba(37, 99, 235, 0.4)'
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = 'translateY(0)'
+                e.currentTarget.style.boxShadow = '0 2px 8px rgba(37, 99, 235, 0.3)'
+              }}
+            >
+              {actionButton.label}
+            </button>
+          )}
+        </div>
       </header>
 
       {data.length === 0 ? (
@@ -139,6 +177,7 @@ function ChartSection({ title, description, data, variant = 'column', height = 2
 }
 
 function PdfAnalyticsPage() {
+  const navigate = useNavigate()
   const [overview, setOverview] = useState<OverviewResponse | null>(null)
   const [overviewError, setOverviewError] = useState<string | null>(null)
   const [loadingOverview, setLoadingOverview] = useState(true)
@@ -279,6 +318,10 @@ function PdfAnalyticsPage() {
         })),
         variant: 'bar' as ChartVariant,
         height: 320,
+        actionButton: {
+          label: 'Ver no Mapa',
+          onClick: () => navigate('/heatmap'),
+        },
       },
       {
         title: 'Pragas mais tratadas',
@@ -315,12 +358,21 @@ function PdfAnalyticsPage() {
     <div className="analytics-page">
       <AppHeader companyName={COMPANY_NAME} />
       <header className="analytics__header">
-        <div>
-          <h2>Dados Estatísticos</h2>
-          <p>
-            Consulte o panorama geral dos certificados emitidos e investigue indicadores específicos puxando um número de
-            certificado.
-          </p>
+        <div className="analytics__header-content">
+          <div>
+            <h2>Dados Estatísticos</h2>
+            <p>
+              Consulte o panorama geral dos certificados emitidos e investigue indicadores específicos puxando um número de
+              certificado.
+            </p>
+          </div>
+          <div>
+            <Link to="/ia">
+              <button className="actions__secondary" type="button">
+                Ir para Recomendações de IA
+              </button>
+            </Link>
+          </div>
         </div>
         <div className="analytics__totals">
           {loadingOverview && <span>Carregando totais...</span>}
@@ -383,6 +435,7 @@ function PdfAnalyticsPage() {
               data={chart.data}
               variant={chart.variant}
               height={chart.height}
+              actionButton={chart.actionButton}
             />
           ))}
       </section>

@@ -11,7 +11,7 @@ export default function AppHeader({ companyName, showWelcome = false }: AppHeade
   const { theme, toggleTheme } = useTheme()
   const location = useLocation()
   const navigate = useNavigate()
-  const isDashboard = location.pathname === '/'
+  const isDashboard = location.pathname === '/dashboard'
 
   return (
     <section className="dashboard__hero">
@@ -26,7 +26,7 @@ export default function AppHeader({ companyName, showWelcome = false }: AppHeade
       </div>
       <div className="app-header__actions">
         {!isDashboard && (
-          <Link to="/" className="app-header__home-btn" title="Voltar para o dashboard">
+          <Link to="/dashboard" className="app-header__home-btn" title="Voltar para o dashboard">
             <svg
               width="20"
               height="20"

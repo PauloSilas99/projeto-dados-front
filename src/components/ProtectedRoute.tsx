@@ -11,7 +11,7 @@ function ProtectedRoute({ children }: ProtectedRouteProps) {
   const bypass = params.get('test') === '1'
 
   if (!isAuthenticated && !bypass) {
-    return <Navigate to="/login" replace />
+    return <Navigate to="/" replace />
   }
 
   return <>{children}</>

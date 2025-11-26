@@ -1,4 +1,5 @@
 import { useEffect, useState, useRef } from 'react'
+import { useNavigate } from 'react-router-dom'
 import AppHeader from '../components/AppHeader'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
@@ -17,6 +18,7 @@ type HeatmapItem = {
 }
 
 function HeatmapPage() {
+    const navigate = useNavigate()
     const [data, setData] = useState<HeatmapItem[]>([])
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState<string | null>(null)
@@ -119,6 +121,52 @@ function HeatmapPage() {
                 <div>
                     <h2>Mapa de Calor - Distribuição Geográfica</h2>
                     <p>Visualização interativa dos certificados por localização (cidade + bairro).</p>
+                </div>
+                <div style={{ marginTop: '1rem' }}>
+                    <button
+                        type="button"
+                        onClick={() => navigate('/dados-pdfs')}
+                        style={{
+                            padding: '0.75rem 1.5rem',
+                            background: 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)',
+                            color: '#fff',
+                            border: 'none',
+                            borderRadius: '12px',
+                            fontSize: '0.9rem',
+                            fontWeight: 600,
+                            cursor: 'pointer',
+                            transition: 'all 0.2s ease',
+                            boxShadow: '0 4px 12px rgba(37, 99, 235, 0.3)',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '0.5rem',
+                        }}
+                        onMouseEnter={(e) => {
+                            e.currentTarget.style.transform = 'translateY(-2px)'
+                            e.currentTarget.style.boxShadow = '0 6px 16px rgba(37, 99, 235, 0.4)'
+                        }}
+                        onMouseLeave={(e) => {
+                            e.currentTarget.style.transform = 'translateY(0)'
+                            e.currentTarget.style.boxShadow = '0 4px 12px rgba(37, 99, 235, 0.3)'
+                        }}
+                    >
+                        <svg
+                            width="20"
+                            height="20"
+                            viewBox="0 0 20 20"
+                            fill="none"
+                            xmlns="http://www.w3.org/2000/svg"
+                        >
+                            <path
+                                d="M12.5 15L7.5 10L12.5 5"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                            />
+                        </svg>
+                        Voltar para Dados Estatísticos
+                    </button>
                 </div>
             </header>
 

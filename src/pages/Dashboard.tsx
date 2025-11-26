@@ -56,10 +56,16 @@ function DashboardPage({ company }: DashboardProps) {
       //   route: '/admin',
       //   status: 'Ferramentas administrativas',
       // },
+      // {
+      //   title: 'Mapa de Calor',
+      //   description: 'Visualize a distribuição geográfica dos certificados por cidade.',
+      //   route: '/heatmap',
+      //   status: 'Disponível agora',
+      // },
       {
-        title: 'Mapa de Calor',
-        description: 'Visualize a distribuição geográfica dos certificados por cidade.',
-        route: '/heatmap',
+        title: 'Recomendações IA',
+        description: 'Recomendações inteligentes que apontam gargalos, oportunidades de automação e insights de atendimento.',
+        route: '/ia',
         status: 'Disponível agora',
       }
     ],

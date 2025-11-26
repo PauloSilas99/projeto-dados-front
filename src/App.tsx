@@ -30,9 +30,10 @@ function App() {
       <AuthProvider>
         <BrowserRouter>
         <Routes>
+          <Route path="/" element={<LoginPage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route
-            path="/"
+            path="/dashboard"
             element={
               <ProtectedRoute>
                 <DashboardPage company={companyProfile} />
@@ -60,6 +61,14 @@ function App() {
             element={
               <ProtectedRoute>
                 <ManualFormPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/ia"
+            element={
+              <ProtectedRoute>
+                <AiImprovementsPage />
               </ProtectedRoute>
             }
           />
