@@ -453,11 +453,8 @@ function PdfAnalyticsPage() {
   const [loadingOverview, setLoadingOverview] = useState(true)
 
   const [idBusca, setIdBusca] = useState('')
-  const [bairroFiltro, setBairroFiltro] = useState('')
-  const [cidadeFiltro, setCidadeFiltro] = useState('')
-  const [minValorFiltro, setMinValorFiltro] = useState('')
-  const [maxValorFiltro, setMaxValorFiltro] = useState('')
-  const [certificadosLista, setCertificadosLista] = useState<any[]>([])
+  const [certificadosDisponiveis, setCertificadosDisponiveis] = useState<any[]>([])
+  const [loadingCertificadosLista, setLoadingCertificadosLista] = useState(false)
   const [certificadoData, setCertificadoData] = useState<CertificadoAnalytics | null>(null)
   const [certificadoError, setCertificadoError] = useState<string | null>(null)
   const [loadingCertificado, setLoadingCertificado] = useState(false)
@@ -494,12 +491,12 @@ function PdfAnalyticsPage() {
     }
   }, [])
 
-  const handleBuscarCertificado = () => {
+  const handleBuscarCertificado = (certificadoId?: string) => {
     const controller = new AbortController()
     setLoadingCertificado(true)
     setCertificadoError(null)
 
-    const byId = idBusca.trim()
+    const byId = (certificadoId || idBusca).trim()
 
     const fetcher = byId
       ? fetchDashboardCertificadoById(byId, controller.signal)
@@ -508,6 +505,10 @@ function PdfAnalyticsPage() {
     fetcher
       .then((payload) => {
         setCertificadoData(payload)
+        // Atualizar o campo de busca se foi passado um ID
+        if (certificadoId) {
+          setIdBusca(certificadoId)
+        }
       })
       .catch((error: Error) => {
         const anyErr = error as any
@@ -534,24 +535,60 @@ function PdfAnalyticsPage() {
       .finally(() => setLoadingCertificado(false))
   }
 
-  const handleBuscarLista = () => {
+  const handleSelecionarCertificado = (certificadoId: string) => {
+    handleBuscarCertificado(certificadoId)
+  }
+
+  // Carregar lista de certificados quando a aba de investigação for aberta
+  useEffect(() => {
+    if (activeTab !== 'investigacao') {
+      return
+    }
+
     const controller = new AbortController()
+    let isMounted = true
+
+    setLoadingCertificadosLista(true)
     setCertificadoError(null)
+
     listCertificates(
       {
-        id: idBusca.trim() || undefined,
-        bairro: bairroFiltro.trim() || undefined,
-        cidade: cidadeFiltro.trim() || undefined,
-        minValor: minValorFiltro ? Number(minValorFiltro) : undefined,
-        maxValor: maxValorFiltro ? Number(maxValorFiltro) : undefined,
         limit: 100,
         offset: 0,
       },
       controller.signal,
     )
-      .then((rows) => setCertificadosLista(rows))
-      .catch((err: Error) => setCertificadoError(err.message || 'Falha ao listar certificados'))
-  }
+      .then((rows) => {
+        if (!isMounted) {
+          return
+        }
+        // Garantir que temos um array válido
+        if (Array.isArray(rows) && rows.length > 0) {
+          setCertificadosDisponiveis(rows)
+        } else {
+          setCertificadosDisponiveis([])
+        }
+      })
+      .catch((err: Error) => {
+        if (!isMounted || isAbortError(err)) {
+          return
+        }
+        console.error('Erro ao carregar certificados:', err)
+        setCertificadoError(err.message || 'Falha ao carregar lista de certificados')
+        setCertificadosDisponiveis([])
+      })
+      .finally(() => {
+        if (!isMounted) {
+          return
+        }
+        setLoadingCertificadosLista(false)
+      })
+
+    return () => {
+      isMounted = false
+      controller.abort()
+    }
+  }, [activeTab])
 
   const resumoFinanceiro = useMemo(() => {
     if (!overview) {
@@ -746,79 +783,135 @@ function PdfAnalyticsPage() {
       {/* Seção de Investigação */}
       {activeTab === 'investigacao' && (
         <section className="analytics__certificado">
-          <header className="certificado-header">
-            <div>
-              <h2>Investigar certificado específico</h2>
-              <p>Busque por ID e aplique filtros por bairro, cidade e faixa de valor.</p>
-            </div>
-            
-            <div className="certificado-search">
-              <input
-                type="text"
-                value={idBusca}
-                onChange={(event) => setIdBusca(event.target.value)}
-                placeholder="ID do certificado (principal)"
-              />
-              <button type="button" onClick={handleBuscarCertificado} disabled={loadingCertificado}>
-                {loadingCertificado ? 'Buscando...' : 'Buscar'}
-              </button>
+          <div className="investigacao-container">
+            <header className="investigacao-header">
+              <div>
+                <h2>Investigar Certificado</h2>
+                <p>Selecione um certificado da lista abaixo ou busque manualmente por ID.</p>
+              </div>
+            </header>
+
+            <div className="investigacao-search">
+              <div className="investigacao-search-main">
+                <div className="search-input-wrapper">
+                  <label htmlFor="certificado-id">ID do Certificado</label>
+                  <input
+                    id="certificado-id"
+                    type="text"
+                    value={idBusca}
+                    onChange={(event) => setIdBusca(event.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && idBusca.trim()) {
+                        handleBuscarCertificado()
+                      }
+                    }}
+                    placeholder="Digite o ID do certificado"
+                    className="investigacao-input"
+                  />
+                </div>
+                <button
+                  type="button"
+                  className="investigacao-btn-primary"
+                  onClick={() => handleBuscarCertificado()}
+                  disabled={loadingCertificado || !idBusca.trim()}
+                >
+                  {loadingCertificado ? (
+                    <>
+                      <span className="spinner"></span>
+                      Buscando...
+                    </>
+                  ) : (
+                    'Buscar Certificado'
+                  )}
+                </button>
+              </div>
             </div>
 
-            <div className="option-grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))' }}>
-              <div className="option-grid__item">
-                <label className="option-group__label">Bairro</label>
-                <input
-                  type="text"
-                  value={bairroFiltro}
-                  onChange={(e) => setBairroFiltro(e.target.value)}
-                  placeholder="Ex: Centro"
-                  className="option-group__input"
-                />
+            <div className="certificados-lista">
+              <div className="certificados-lista-header">
+                <h3>Certificados Disponíveis</h3>
+                {loadingCertificadosLista && <span className="loading-text">Carregando...</span>}
               </div>
-              <div className="option-grid__item">
-                <label className="option-group__label">Cidade</label>
-                <input
-                  type="text"
-                  value={cidadeFiltro}
-                  onChange={(e) => setCidadeFiltro(e.target.value)}
-                  placeholder="Ex: Imperatriz-MA"
-                  className="option-group__input"
-                />
-              </div>
-              <div className="option-grid__item">
-                <label className="option-group__label">Valor mínimo</label>
-                <input
-                  type="number"
-                  step="0.01"
-                  value={minValorFiltro}
-                  onChange={(e) => setMinValorFiltro(e.target.value)}
-                  placeholder="Ex: 100"
-                  className="option-group__input"
-                />
-              </div>
-              <div className="option-grid__item">
-                <label className="option-group__label">Valor máximo</label>
-                <input
-                  type="number"
-                  step="0.01"
-                  value={maxValorFiltro}
-                  onChange={(e) => setMaxValorFiltro(e.target.value)}
-                  placeholder="Ex: 500"
-                  className="option-group__input"
-                />
-              </div>
+              
+              {loadingCertificadosLista ? (
+                <div className="certificados-lista-loading">
+                  <p>Carregando lista de certificados...</p>
+                </div>
+              ) : certificadosDisponiveis.length === 0 ? (
+                <div className="certificados-lista-empty">
+                  <p>Nenhum certificado encontrado.</p>
+                </div>
+              ) : (
+                <div className="certificados-lista-grid">
+                  {certificadosDisponiveis.map((row, index) => {
+                    // Garantir que temos um certificado válido
+                    const certificado = row?.certificado || row || {}
+                    
+                    // Extrair ID - tentar múltiplas chaves possíveis
+                    const certificadoId = String(
+                      certificado.id || 
+                      certificado.certificado_id || 
+                      certificado.certificadoId ||
+                      index
+                    )
+                    
+                    // Extrair razão social - tentar múltiplas chaves possíveis
+                    const razaoSocial = String(
+                      certificado.razao_social || 
+                      certificado.razaoSocial || 
+                      certificado.nome ||
+                      certificado.empresa ||
+                      certificado.cliente ||
+                      'Sem nome'
+                    )
+                    
+                    // Extrair cidade
+                    const cidade = String(
+                      certificado.cidade || 
+                      certificado.municipio ||
+                      'Cidade não informada'
+                    )
+                    
+                    // Extrair bairro
+                    const bairro = String(
+                      certificado.bairro || 
+                      'Bairro não informado'
+                    )
+                    
+                    // Extrair número do certificado se disponível
+                    const numeroCertificado = certificado.numero || certificado.numero_certificado || certificado.numeroCertificado
+                    
+                    return (
+                      <button
+                        key={`${certificadoId}-${index}`}
+                        type="button"
+                        className={`certificado-item ${idBusca === certificadoId ? 'certificado-item--selected' : ''}`}
+                        onClick={() => handleSelecionarCertificado(certificadoId)}
+                      >
+                        <div className="certificado-item-header">
+                          <span className="certificado-item-id">ID: {certificadoId}</span>
+                          {numeroCertificado && (
+                            <span className="certificado-item-numero">Nº: {String(numeroCertificado)}</span>
+                          )}
+                        </div>
+                        <div className="certificado-item-body">
+                          <h4>{razaoSocial}</h4>
+                          <p>{bairro}, {cidade}</p>
+                        </div>
+                      </button>
+                    )
+                  })}
+                </div>
+              )}
             </div>
-            
-            <div className="actions">
-              <button className="actions__secondary" type="button" onClick={handleBuscarLista}>
-                Aplicar filtros na lista
-              </button>
-            </div>
-          </header>
 
-          {certificadoError && <p className="feedback feedback--error">{certificadoError}</p>}
+            {certificadoError && (
+              <div className="investigacao-error">
+                <p>{certificadoError}</p>
+              </div>
+            )}
 
-          {certificadoData && (
+            {certificadoData && (
             <div className="certificado-panels">
               <article className="certificado-details">
                 <h3>Dados principais</h3>
@@ -850,39 +943,10 @@ function PdfAnalyticsPage() {
                         </button>
                       </li>
                     ))}
-                  </ul>
+        </ul>
                 </article>
               )}
 
-              {certificadosLista.length > 0 && (
-                <section className="analytics__grid">
-                  {certificadosLista.map((row) => (
-                    <div key={String(row.certificado?.id || row.urls?.detalhes)} className="chart-card">
-                      <header>
-                        <h3>{String(row.certificado?.razao_social || 'Certificado')}</h3>
-                        <p>ID: {String(row.certificado?.id || '')}</p>
-                      </header>
-                      <div>
-                        <p>
-                          Bairro: {String(row.certificado?.bairro || '-')}; Cidade: {String(row.certificado?.cidade || '-')}
-                        </p>
-                        <div className="download-links" style={{ marginTop: 6 }}>
-                          {row.urls?.pdf && (
-                            <a href={row.urls.pdf} className="download-link" download>
-                              Baixar PDF
-                            </a>
-                          )}
-                          {row.urls?.planilha && (
-                            <a href={row.urls.planilha} className="download-link" download>
-                              Baixar planilha
-                            </a>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </section>
-              )}
 
               <ChartSection
                 title="Produtos por classe química"
@@ -902,7 +966,8 @@ function PdfAnalyticsPage() {
                 }))}
               />
             </div>
-          )}
+            )}
+          </div>
         </section>
       )}
 

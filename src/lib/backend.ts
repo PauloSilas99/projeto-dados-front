@@ -233,26 +233,53 @@ export async function listCertificates(filters: CertificateFilters = {}, signal?
   if (typeof filters.maxValor === 'number') params.set('max_valor', String(filters.maxValor))
   params.set('limit', String(filters.limit ?? 100))
   params.set('offset', String(filters.offset ?? 0))
+  
   const response = await fetch(`${API_BASE_URL}/certificados?${params.toString()}`, { signal })
-  {
-    const text = await response.text()
-    let parsed: any
+  
+  if (!response.ok) {
+    const text = await response.text().catch(() => '')
+    let errorMessage = `Erro ${response.status} ao listar certificados`
     try {
-      parsed = JSON.parse(text)
+      const parsed = JSON.parse(text)
+      if (parsed?.message) {
+        errorMessage = parsed.message
+      } else if (parsed?.detail) {
+        errorMessage = typeof parsed.detail === 'string' ? parsed.detail : JSON.stringify(parsed.detail)
+      }
     } catch {
-      throw new Error(text || `Erro ${response.status} ao listar certificados`)
+      if (text) {
+        errorMessage = text
+      }
     }
+    throw new Error(errorMessage)
+  }
 
-    if (parsed?.sucesso === false) {
-      throw new Error(parsed.message || 'Erro ao listar certificados')
-    }
+  const text = await response.text()
+  let parsed: any
+  try {
+    parsed = JSON.parse(text)
+  } catch {
+    throw new Error(text || 'Resposta inválida do servidor')
+  }
 
-    if (!parsed?.data) {
-      throw new Error('Resposta inválida do servidor: dados ausentes')
-    }
+  // Verificar se está no formato envelope
+  if (parsed?.sucesso === false) {
+    throw new Error(parsed.message || 'Erro ao listar certificados')
+  }
+
+  // Se tem data no envelope, usar
+  if (parsed?.data) {
     const data = parsed.data as CertificateListItem[]
     return Array.isArray(data) ? data : []
   }
+
+  // Se não tem envelope, pode ser array direto
+  if (Array.isArray(parsed)) {
+    return parsed as CertificateListItem[]
+  }
+
+  // Se não tem data nem é array, retornar vazio ou lançar erro
+  throw new Error('Resposta inválida do servidor: formato de dados não reconhecido')
 }
 
 export interface ManualFormPayload {
