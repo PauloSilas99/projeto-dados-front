@@ -82,12 +82,13 @@ def create_app() -> FastAPI:
         # Isso resolve problemas onde volumes do Docker mascaram diretórios criados no build
         try:
             out_dir = config.output_dir
-            # Garante que o diretório pai existe (parents=True)
-            os.makedirs(out_dir / "pdfs", parents=True, exist_ok=True)
-            os.makedirs(out_dir / "planilhas", parents=True, exist_ok=True)
+            # Garante que o diretório pai existe
+            os.makedirs(out_dir, exist_ok=True)
+            os.makedirs(out_dir / "pdfs", exist_ok=True)
+            os.makedirs(out_dir / "planilhas", exist_ok=True)
             # Cria também uploads e results na raiz (mapeados via volume)
-            os.makedirs("/app/uploads", parents=True, exist_ok=True)
-            os.makedirs("/app/results", parents=True, exist_ok=True)
+            os.makedirs("/app/uploads", exist_ok=True)
+            os.makedirs("/app/results", exist_ok=True)
             print(f"✅ Diretórios criados/verificados: {out_dir}, /app/uploads, /app/results")
         except Exception as e:
             print(f"⚠️ Aviso: Falha ao criar diretórios: {e}")
