@@ -12,6 +12,8 @@ from backend.domain.services.excel_sanitizer import sanitize_excel_for_engine
 from backend.domain.exceptions import ValidationError, DataInconsistencyError
 from backend.domain.services import pdf_service
 from backend.application.dtos import CertificateCreatedDTO
+from backend.domain.services.processed_files_index import ProcessedFilesIndex
+from datetime import datetime, timezone
 
 ALLOWED_EXTENSIONS = {".xlsx", ".xls"}
 
@@ -27,8 +29,12 @@ class UploadExcelInput:
 class UploadExcelUseCase:
     def __init__(self, pdf_engine: PdfEngine):
         self.pdf_engine = pdf_engine
+        self._index = ProcessedFilesIndex(self.pdf_engine.get_pdf_generator().output_dir)
 
     async def execute(self, inp: UploadExcelInput) -> CertificateCreatedDTO:
+        file_hash = await asyncio.to_thread(ProcessedFilesIndex.sha256_bytes, inp.file_bytes)
+        if self._index.exists(file_hash):
+            raise ValidationError("Arquivo já processado.", errors=[{"field": "arquivo", "message": "DUPLICATE_FILE"}])
         suffix = Path(inp.filename or "").suffix.lower()
         if suffix not in ALLOWED_EXTENSIONS:
             raise ValidationError("Formato de arquivo inválido. Use .xlsx ou .xls.")
@@ -56,6 +62,19 @@ class UploadExcelUseCase:
             pdf_path = await asyncio.to_thread(pdf_service.ensure_pdf, bundle, self.pdf_engine)
 
             cert_id = certificado.to_dict().get("id")
+            # Registra arquivo processado
+            try:
+                self._index.add({
+                    "hash": file_hash,
+                    "filename": inp.filename,
+                    "numero_certificado": str(certificado.numero_certificado),
+                    "cert_id": cert_id,
+                    "pdf": str(pdf_path.resolve()),
+                    "planilha": str(planilha_path.resolve()),
+                    "processed_at": datetime.now(timezone.utc).isoformat(),
+                })
+            except Exception:
+                pass
 
             return CertificateCreatedDTO(
                 id=cert_id,

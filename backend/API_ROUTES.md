@@ -137,6 +137,10 @@ POST /certificados/upload-excel
 }
 ```
 
+**Possíveis erros (400):**
+- `codigo=VALIDATION_ERROR`: formato inválido (`.xlsx` ou `.xls` exigidos)
+- `codigo=DUPLICATE_FILE`: arquivo já foi processado anteriormente
+
 ---
 
 ### Obter Certificado por ID
