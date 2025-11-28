@@ -5,7 +5,7 @@ import { createManualCertificate, type ManualFormPayload } from '../lib/backend'
 import type { UploadExcelResult } from '../lib/backend'
 import '../App.css'
 
-const COMPANY_NAME = 'SC Solutions'
+const COMPANY_NAME = 'ServeImuni'
 
 type Produto = {
   nome_produto: string

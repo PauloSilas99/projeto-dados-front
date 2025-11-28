@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import AppHeader from '../components/AppHeader'
 
-const COMPANY_NAME = 'SC Solutions'
+const COMPANY_NAME = 'ServeImuni'
 
 const API_BASE = import.meta.env.VITE_API_URL?.replace(/\/+$/, '') || 'http://127.0.0.1:8000'
 

@@ -4,7 +4,7 @@ import AppHeader from '../components/AppHeader'
 import { clearCache, getCacheStatus } from '../lib/backend'
 import '../App.css'
 
-const COMPANY_NAME = 'SC Solutions'
+const COMPANY_NAME = 'ServeImuni'
 
 function AdminCachePage() {
   const [status, setStatus] = useState<any>(null)

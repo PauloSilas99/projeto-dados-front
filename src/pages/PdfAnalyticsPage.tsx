@@ -28,7 +28,7 @@ import {
 import { listCertificates } from '../lib/backend'
 import '../App.css'
 
-const COMPANY_NAME = 'SC Solutions'
+const COMPANY_NAME = 'ServeImuni'
 
 const isAbortError = (error: unknown): error is DOMException =>
   error instanceof DOMException && error.name === 'AbortError'

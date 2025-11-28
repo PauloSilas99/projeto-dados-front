@@ -16,7 +16,7 @@ import UserProfilePage from './pages/UserProfilePage'
 import './App.css'
 
 const companyProfile = {
-  name: 'SC Solutions',
+  name: 'ServeImuni',
   cnpj: '12.345.678/0001-99',
   segment: 'Serviços de Certificação',
   contactEmail: 'dados@scsolutions.com.br',

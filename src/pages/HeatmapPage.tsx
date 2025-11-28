@@ -6,7 +6,7 @@ import 'leaflet/dist/leaflet.css'
 import 'leaflet.heat'
 import '../App.css'
 
-const COMPANY_NAME = 'SC Solutions'
+const COMPANY_NAME = 'ServeImuni'
 
 type HeatmapItem = {
     city: string

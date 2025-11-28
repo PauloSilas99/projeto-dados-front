@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import AppHeader from '../components/AppHeader'
 import '../App.css'
 
-const COMPANY_NAME = 'SC Solutions'
+const COMPANY_NAME = 'ServeImuni'
 
 function AdminHomePage() {
   const navigate = useNavigate()

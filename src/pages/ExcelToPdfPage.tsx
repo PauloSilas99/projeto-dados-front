@@ -5,7 +5,7 @@ import { uploadExcelFile, uploadMultipleExcelFiles } from '../lib/backend'
 import type { UploadExcelResult, UploadExcelItemResult } from '../lib/backend'
 import '../App.css'
 
-const COMPANY_NAME = 'SC Solutions'
+const COMPANY_NAME = 'ServeImuni'
 
 type ConvertStatus = 'idle' | 'loading' | 'success' | 'error'
 
