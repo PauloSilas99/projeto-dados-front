@@ -36,8 +36,25 @@ function AdminPdfsPage() {
   const [previewOpen, setPreviewOpen] = useState(false)
   const [previewUrl, setPreviewUrl] = useState<string | null>(null)
   const [previewName, setPreviewName] = useState<string | null>(null)
+  // Popup de funcionalidade não implementada
+  const [notImplOpen, setNotImplOpen] = useState(false)
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setNotImplOpen(false)
+    }
+    if (notImplOpen) {
+      window.addEventListener('keydown', onKey)
+    }
+    return () => window.removeEventListener('keydown', onKey)
+  }, [notImplOpen])
 
   const selectedNames = useMemo(() => Object.keys(selected).filter((n) => selected[n]), [selected])
+  const selectedIds = useMemo(() => {
+    return items
+      .filter((it) => selected[it.relpath])
+      .map((it) => (it as any).cert_id)
+      .filter((id) => typeof id === 'string' && id.trim())
+  }, [items, selected])
 
   const sortedItems = useMemo(() => {
     const base = [...items]
@@ -118,19 +135,14 @@ function AdminPdfsPage() {
   }
 
   const excluirSelecionados = () => {
-    if (selectedNames.length === 0) return
-    fetch(`${API_BASE}/api/admin/pdfs`, {
-      method: 'DELETE',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ names: selectedNames }),
-    })
-      .then(async (res) => {
-        const text = await res.text()
-        const parsed = JSON.parse(text)
-        if (parsed?.sucesso !== true) throw new Error(parsed?.message || 'Falha ao excluir PDFs')
-        load()
-      })
-      .catch((e: Error) => setError(e.message))
+    const payloadItems = items
+      .filter((it) => selected[it.relpath])
+      .map((it) => ({ name: it.relpath, id: (it as any).cert_id }))
+    if (payloadItems.length === 0) {
+      setError('Nenhum item selecionado para excluir')
+      return
+    }
+    setNotImplOpen(true)
   }
 
   const baixarZip = () => {
@@ -158,13 +170,13 @@ function AdminPdfsPage() {
       <header className="analytics__header">
         <div>
           <h1>Documentos PDF</h1>
-          <p>Gerencie visualização, download e exclusão de PDFs gerados.</p>
+          <p>Gerencie visualização e download dos PDFs gerados.</p>
         </div>
       </header>
 
       <section className="analytics__grid" style={{ gridTemplateColumns: '1fr' }}>
         <div className="chart-card">
-          <div className="option-grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))' }}>
+          <div className="option-grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 12 }}>
             <div className="option-grid__item">
               <label className="option-group__label">Busca por nome</label>
               <input className="option-group__input" value={q} onChange={(e) => setQ(e.target.value)} placeholder="cert_..." />
@@ -173,7 +185,6 @@ function AdminPdfsPage() {
               <label className="option-group__label">Tipo</label>
               <select className="option-group__input" value={docType} onChange={(e) => setDocType(e.target.value)}>
                 <option value="">Todos</option>
-                <option value="certificado">Certificado</option>
                 <option value="documento">Documento</option>
               </select>
             </div>
@@ -204,16 +215,8 @@ function AdminPdfsPage() {
               <input className="option-group__input" type="number" value={limit} onChange={(e) => setLimit(Number(e.target.value))} />
             </div>
           </div>
-          <div className="actions">
-            <button
-              className="actions__secondary"
-              onClick={() => {
-                setOffset(0)
-                setTimeout(load, 0)
-              }}
-            >
-              Aplicar filtros
-            </button>
+          <div className="actions" style={{ marginTop: 8, display: 'flex', justifyContent: 'flex-end' }}>
+            <button className="actions__secondary btn-large" onClick={load}>Aplicar filtros</button>
           </div>
           <div style={{ marginTop: 8, color: '#64748b', fontSize: '0.85rem' }}>
             <span>Query atual: </span>
@@ -221,8 +224,8 @@ function AdminPdfsPage() {
               const p = new URLSearchParams()
               if (q.trim()) p.set('q', q.trim())
               if (docType.trim()) p.set('doc_type', docType.trim())
-              if (dataDe.trim()) p.set('data_de', dataDe.trim())
-              if (dataAte.trim()) p.set('data_ate', dataAte.trim())
+              if (dataDe.trim()) p.set('data_de', `${dataDe.trim()}T00:00:00`)
+              if (dataAte.trim()) p.set('data_ate', `${dataAte.trim()}T23:59:59`)
               p.set('limit', String(limit))
               p.set('offset', String(offset))
               return `/api/admin/pdfs?${p.toString()}`
@@ -231,7 +234,7 @@ function AdminPdfsPage() {
         </div>
 
         <div className="chart-card">
-          <div className="option-grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))' }}>
+          <div className="option-grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 12 }}>
             <div className="option-grid__item">
               <label className="option-group__label">Ordenar por</label>
               <select className="option-group__input" value={sortKey} onChange={(e) => setSortKey(e.target.value as any)}>
@@ -251,47 +254,63 @@ function AdminPdfsPage() {
               <span className="sort-indicator">Ordenação: {sortKey}/{sortDir}</span>
             </div>
           </div>
-          {loading && <p>Carregando documentos...</p>}
-          {!loading && error && <p className="feedback feedback--error">{error}</p>}
+          {loading && <p style={{ padding: '1rem', textAlign: 'center' }}>Carregando documentos...</p>}
+          {!loading && error && <p className="feedback feedback--error" style={{ textAlign: 'center' }}>{error}</p>}
           {!loading && !error && items.length === 0 && <p className="chart-card__empty">Nenhum PDF encontrado.</p>}
           {!loading && !error && items.length > 0 && (
-            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+            <table style={{ width: '100%', borderCollapse: 'separate', borderSpacing: 0 }}>
               <thead>
                 <tr>
-                  <th style={{ textAlign: 'left' }}>Selecionar</th>
-                  <th style={{ textAlign: 'left' }}>Arquivo</th>
-                  <th style={{ textAlign: 'left' }}>Tipo</th>
-                  <th style={{ textAlign: 'left' }}>Tamanho</th>
-                  <th style={{ textAlign: 'left' }}>Criado</th>
-                  <th style={{ textAlign: 'left' }}>Ações</th>
+                  <th style={{ textAlign: 'left', padding: '10px 12px' }}>Selecionar</th>
+                  <th style={{ textAlign: 'left', padding: '10px 12px' }}>Arquivo</th>
+                  <th style={{ textAlign: 'left', padding: '10px 12px' }}>Tipo</th>
+                  <th style={{ textAlign: 'left', padding: '10px 12px' }}>Tamanho</th>
+                  <th style={{ textAlign: 'left', padding: '10px 12px' }}>Criado</th>
+                  <th style={{ textAlign: 'left', padding: '10px 12px' }}>Ações</th>
                 </tr>
               </thead>
               <tbody>
                 {sortedItems.map((it) => (
                   <tr key={it.relpath} style={{ borderTop: '1px solid #e2e8f0' }}>
-                    <td>
+                    <td style={{ padding: '10px 12px' }}>
                       <input type="checkbox" checked={!!selected[it.relpath]} onChange={(e) => toggle(it.relpath, e.target.checked)} />
                     </td>
-                    <td>
+                    <td style={{ padding: '10px 12px' }}>
                       <div style={{ fontWeight: 600 }}>{it.name}</div>
                       <span className={`badge badge--status-${it.status}`}>{it.status}</span>{' '}
                       <span className={`badge badge--type-${it.doc_type}`}>{it.doc_type}</span>
                     </td>
-                    <td>{it.doc_type}</td>
-                    <td>{it.size_human}</td>
-                    <td>{new Date(it.modified_at).toLocaleString()}</td>
-                    <td>
-                      <button className="actions__secondary" type="button" onClick={() => openPreview(it.relpath)}>Preview</button>{' '}
-                      <a className="download-link" href={`${API_BASE}/api/admin/pdfs/download?name=${encodeURIComponent(it.relpath)}`} download>Download</a>
+                    <td style={{ padding: '10px 12px' }}>{it.doc_type}</td>
+                    <td style={{ padding: '10px 12px' }}>{it.size_human}</td>
+                    <td style={{ padding: '10px 12px' }}>{new Date(it.modified_at).toLocaleString()}</td>
+                    <td style={{ padding: '10px 12px' }}>
+                      <button className="actions__secondary btn-large" type="button" onClick={() => openPreview(it.relpath)}>Preview</button>{' '}
+                      <a className="download-link btn-large" href={`${API_BASE}/api/admin/pdfs/download?name=${encodeURIComponent(it.relpath)}`} download>Download</a>
                     </td>
                   </tr>
                 ))}
               </tbody>
             </table>
           )}
-          <div className="actions" style={{ marginTop: 12 }}>
-            <button className="actions__secondary" onClick={baixarZip} disabled={selectedNames.length === 0}>Baixar selecionados (.zip)</button>
-            <button className="actions__danger" onClick={excluirSelecionados} disabled={selectedNames.length === 0}>Excluir selecionados</button>
+          <div className="actions" style={{ marginTop: 24, display: 'flex', gap: 12, alignItems: 'center', justifyContent: 'flex-end' }}>
+            <button className="actions__secondary btn-large" onClick={baixarZip} disabled={selectedNames.length === 0}>Baixar selecionados (.zip)</button>
+            <button
+              className="btn-large"
+              onClick={excluirSelecionados}
+              disabled={selectedNames.length === 0}
+              style={{
+                padding: '0.6rem 1rem',
+                background: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)',
+                color: '#fff',
+                border: 'none',
+                borderRadius: 12,
+                fontWeight: 600,
+                cursor: selectedNames.length === 0 ? 'not-allowed' : 'pointer',
+                opacity: selectedNames.length === 0 ? 0.6 : 1
+              }}
+            >
+              Excluir selecionados
+            </button>
           </div>
         </div>
       </section>
@@ -311,6 +330,70 @@ function AdminPdfsPage() {
           </div>
         </div>
       )}
+      {notImplOpen && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="not-impl-title"
+          onClick={() => setNotImplOpen(false)}
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(2, 6, 23, 0.45)',
+            backdropFilter: 'blur(3px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 9999,
+          }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              width: 'min(520px, 92vw)',
+              borderRadius: 16,
+              overflow: 'hidden',
+              boxShadow: '0 24px 48px rgba(2, 6, 23, 0.35)',
+              background: '#fff',
+            }}
+          >
+            <div
+              style={{
+                background: 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)',
+                color: '#fff',
+                padding: '14px 16px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+              }}
+            >
+              <h3 id="not-impl-title" style={{ margin: 0, fontSize: '1.1rem' }}>Funcionalidade não implementada</h3>
+              <button
+                type="button"
+                aria-label="Fechar"
+                onClick={() => setNotImplOpen(false)}
+                style={{
+                  background: 'transparent',
+                  border: 'none',
+                  color: '#fff',
+                  fontWeight: 700,
+                  fontSize: '1rem',
+                  cursor: 'pointer',
+                }}
+              >
+                ✕
+              </button>
+            </div>
+            <div style={{ padding: '16px 18px', color: '#0f172a' }}>
+              <p style={{ margin: 0, lineHeight: 1.6 }}>
+                Exclusão em cascata ainda não está disponível. Em breve você poderá remover PDFs e seus registros relacionados de forma segura.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Popup de aviso removido conforme solicitado */}
     </div>
   )
 }
