@@ -52,7 +52,10 @@ class DownloadPdfUseCase:
         # Tenta localizar por nome + número para evitar colisões
         pdf_path = await asyncio.to_thread(self.repository.get_pdf_path, cert_entity.numero_certificado)
         
-        if not pdf_path:
+        # Sempre garantir a cópia prefixada por cidade quando houver cidade disponível
+        if pdf_path and cert_entity.cidade:
+            pdf_path = await asyncio.to_thread(pdf_service.ensure_city_prefixed_copy, pdf_path, cert_entity.cidade, self.pdf_engine)
+        elif not pdf_path:
             # Fallback to regeneration
             bundle = self.pdf_engine.get_bundle_by_numero(cert_entity.numero_certificado)
             if bundle:

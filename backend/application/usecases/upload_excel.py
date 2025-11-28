@@ -68,6 +68,13 @@ class UploadExcelUseCase:
                 raise DataInconsistencyError("Falha ao recuperar dados persistidos do certificado.")
 
             pdf_path = await asyncio.to_thread(pdf_service.ensure_pdf, bundle, self.pdf_engine)
+            # Garantir nome único por cidade
+            try:
+                cidade = str(certificado.cidade)
+            except Exception:
+                cidade = ""
+            if cidade:
+                pdf_path = await asyncio.to_thread(pdf_service.ensure_city_prefixed_copy, pdf_path, cidade, self.pdf_engine)
             if self.logger: self.logger.info("pdf_ready", output=str(pdf_path))
 
             cert_id = certificado.to_dict().get("id")
