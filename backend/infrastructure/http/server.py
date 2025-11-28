@@ -17,6 +17,7 @@ from backend.infrastructure.adapters.pdf_engine_adapter import EnginePdfAdapter
 from backend.infrastructure.adapters.nominatim_adapter import NominatimAdapter
 from backend.infrastructure.repositories import FileCertificadoRepository
 from backend.infrastructure.factories import make_engine_config
+from backend.infrastructure.logging.factory import LoggerFactory
 
 # Controllers
 from backend.interface.controllers.certificados_controller import CertificadosController
@@ -89,19 +90,23 @@ def create_app() -> FastAPI:
             # Cria também uploads e results na raiz (mapeados via volume)
             os.makedirs("/app/uploads", exist_ok=True)
             os.makedirs("/app/results", exist_ok=True)
-            print(f"✅ Diretórios criados/verificados: {out_dir}, /app/uploads, /app/results")
+            root_logger = LoggerFactory.from_env(component="backend")
+            root_logger.info("dirs_ready", output_dir=str(out_dir), uploads="/app/uploads", results="/app/results")
         except Exception as e:
-            print(f"⚠️ Aviso: Falha ao criar diretórios: {e}")
+            root_logger = LoggerFactory.from_env(component="backend")
+            root_logger.warn("dirs_fail", error=str(e))
 
         # 2. Instancia dependências da infraestrutura
         pdf_engine = EnginePdfAdapter(config)
         repository = FileCertificadoRepository(pdf_engine)
-        geocoding_service = NominatimAdapter()
+        geocoding_service = NominatimAdapter(logger=root_logger.with_component("NominatimAdapter"))
+        root_logger = LoggerFactory.from_env(component="backend")
 
         # 3. Cria controllers com DI via construtor
         certificados_controller = CertificadosController(
             pdf_engine=pdf_engine,
-            repository=repository
+            repository=repository,
+            logger=root_logger.with_component("CertificadosController")
         )
         dashboard_controller = DashboardController(
             pdf_engine=pdf_engine,
@@ -109,13 +114,15 @@ def create_app() -> FastAPI:
         )
         admin_controller = AdminController(
             pdf_engine=pdf_engine,
-            system_state=system_state
+            system_state=system_state,
+            logger=root_logger.with_component("AdminController")
         )
 
         # 4. Injeta controllers nos routers
         certificados.setup_controller(certificados_controller)
         dashboard.setup_controller(dashboard_controller)
         admin.setup_controller(admin_controller)
+        root_logger.info("startup", output_dir=str(config.output_dir))
 
     # Registra routers
     app.include_router(certificados.router)

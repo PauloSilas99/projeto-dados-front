@@ -23,6 +23,7 @@ export type OverviewResponse = {
     total: number
     media: number
   }
+  produtosPorNome: Array<{ produto: string; quantidade: number }>
 }
 
 export type CertificadoAnalytics = {
@@ -108,5 +109,4 @@ export async function fetchDashboardCertificadoById(
   const response = await fetch(`${API_BASE}/dashboard/certificado?id=${encoded}`, { signal })
   return readEnvelope<CertificadoAnalytics>(response)
 }
-
 

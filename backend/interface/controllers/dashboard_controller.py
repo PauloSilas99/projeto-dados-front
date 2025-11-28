@@ -61,11 +61,14 @@ class DashboardController:
             from backend.infrastructure.repositories import FileCertificadoRepository
             repo = FileCertificadoRepository(self.pdf_engine)
             
-            use_case = GetCityHeatmapDataUseCase(repo, self.geocoding_service)
+            import os
+            cache_dir = os.getenv("HEATMAP_CACHE_DIR", "/app/outputs/cache")
+            cache_path = os.path.join(cache_dir, "heatmap.json")
+            ttl = int(os.getenv("HEATMAP_CACHE_TTL", "300"))
+            use_case = GetCityHeatmapDataUseCase(repo, self.geocoding_service, cache_path=cache_path, ttl_seconds=ttl)
             result = await use_case.execute()
             return success(result.model_dump(), message="Dados do mapa de calor recuperados com sucesso")
         except Exception as e:
             import traceback
             traceback.print_exc()
             return error(str(e), codigo="HEATMAP_ERROR", status_code=500)
-

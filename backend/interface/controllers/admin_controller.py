@@ -22,7 +22,7 @@ from backend.application.usecases.admin import (
 class AdminController:
     """Controllers para endpoints administrativos"""
     
-    def __init__(self, pdf_engine: PdfEngine, system_state: SystemStateService):
+    def __init__(self, pdf_engine: PdfEngine, system_state: SystemStateService, logger=None):
         """
         Injeta dependências via construtor.
         
@@ -32,6 +32,7 @@ class AdminController:
         """
         self.pdf_engine = pdf_engine
         self.system_state = system_state
+        self.logger = logger
     
     async def clear_cache(self, client_host: str) -> Dict[str, Any]:
         """Handler para limpar cache"""
@@ -54,30 +55,40 @@ class AdminController:
         offset: int = 0,
     ) -> Dict[str, Any]:
         """Handler para listar PDFs"""
+        if self.logger: self.logger.info("admin_list_pdfs_start", q=q, doc_type=doc_type, data_de=data_de, data_ate=data_ate, limit=limit, offset=offset)
         usecase = ListPdfsUseCase(self.pdf_engine)
         data = usecase.execute(q, doc_type, data_de, data_ate, limit, offset)
+        if self.logger: self.logger.info("admin_list_pdfs_done", count=len(data or []))
         return success(data, message="Lista de PDFs")
     
     async def preview_pdf(self, name: str) -> Path | Dict[str, Any]:
         """Handler para preview de PDF"""
+        if self.logger: self.logger.info("admin_preview_pdf_start", name=name)
         usecase = DownloadPdfByNameUseCase(self.pdf_engine)
         try:
             path = usecase.execute(name)
+            if self.logger: self.logger.info("admin_preview_pdf_done", name=name, exists=bool(path))
             return path  # Path será tratado no router
         except ValueError:
+            if self.logger: self.logger.warn("admin_preview_pdf_invalid_path", name=name)
             return error("Caminho inválido.", codigo="INVALID_PATH", status_code=400)
         except FileNotFoundError:
+            if self.logger: self.logger.error("admin_preview_pdf_not_found", name=name)
             return error("PDF não encontrado.", codigo="PDF_NOT_FOUND", status_code=404)
     
     async def download_pdf(self, name: str) -> Path | Dict[str, Any]:
         """Handler para download de PDF"""
+        if self.logger: self.logger.info("admin_download_pdf_start", name=name)
         usecase = DownloadPdfByNameUseCase(self.pdf_engine)
         try:
             path = usecase.execute(name)
+            if self.logger: self.logger.info("admin_download_pdf_done", name=name, exists=bool(path))
             return path  # Path será tratado no router
         except ValueError:
+            if self.logger: self.logger.warn("admin_download_pdf_invalid_path", name=name)
             return error("Caminho inválido.", codigo="INVALID_PATH", status_code=400)
         except FileNotFoundError:
+            if self.logger: self.logger.error("admin_download_pdf_not_found", name=name)
             return error("PDF não encontrado.", codigo="PDF_NOT_FOUND", status_code=404)
     
     async def download_zip(self, names: List[str]) -> Path | Dict[str, Any]:
@@ -85,8 +96,10 @@ class AdminController:
         if not isinstance(names, list) or not names:
             return error("Lista de arquivos vazia.", codigo="EMPTY_LIST", status_code=400)
         
+        if self.logger: self.logger.info("admin_download_zip_start", names_count=len(names or []))
         usecase = DownloadZipUseCase(self.pdf_engine)
         zip_path = usecase.execute(names)
+        if self.logger: self.logger.info("admin_download_zip_done", path=str(zip_path))
         return zip_path  # Path será tratado no router
     
     async def delete_pdfs(self, names: List[str]) -> Dict[str, Any]:

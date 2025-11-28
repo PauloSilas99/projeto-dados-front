@@ -135,7 +135,7 @@ class EnginePdfAdapter(PdfEngine):
             ValidationError: Se os dados forem inválidos
         """
         try:
-            return self._motor.criar_certificado_manual(dados)
+            return self._motor.criar_manual(dados)
         except EngineValidationError as e:
             raise ValidationError(
                 message="Erro de validação nos dados do certificado",

@@ -19,6 +19,7 @@ from backend.application.dtos import (
     ClasseQuimicaDTO,
     MetodoAplicacaoDTO,
     ValorFinanceiroDTO,
+    ProdutoPorNomeDTO,
 )
 
 
@@ -40,6 +41,7 @@ class GetDashboardOverviewUseCase:
             classesQuimicas=self._group_csv_column(produtos, "classe_quimica", "classe"),
             metodosAplicacao=self._group_csv_column(metodos, "metodo", "metodo"),
             valorFinanceiro=self._build_finance_summary(certificados),
+            produtosPorNome=self.group_produtos_por_nome(),
         )
 
     def _build_totals(
@@ -89,6 +91,15 @@ class GetDashboardOverviewUseCase:
             return [ClasseQuimicaDTO(classe=k, quantidade=v) for k, v in contador.most_common()]
         else:
             return [MetodoAplicacaoDTO(metodo=k, quantidade=v) for k, v in contador.most_common()]
+
+    def group_produtos_por_nome(self) -> List[ProdutoPorNomeDTO]:
+        rows = list(self._iter_csv_rows(self.csv_manager.produtos_path))
+        contador = Counter()
+        for row in rows:
+            nome = (row.get("produto") or row.get("nome_produto") or "").strip()
+            if nome:
+                contador[nome] += 1
+        return [ProdutoPorNomeDTO(produto=k, quantidade=v) for k, v in contador.most_common()]
 
     def _build_finance_summary(self, certificados: Iterable[Any]) -> ValorFinanceiroDTO:
         valores: List[float] = []

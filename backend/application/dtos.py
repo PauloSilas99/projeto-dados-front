@@ -63,6 +63,7 @@ class CertificadoListItemDTO(BaseModel):
     id: str
     numero_certificado: str
     razao_social: str
+    bairro: Optional[str] = None
     cidade: str
     valor: Optional[str] = None
     data_execucao: datetime
@@ -125,6 +126,11 @@ class DashboardOverviewDTO(BaseModel):
     classesQuimicas: List[ClasseQuimicaDTO]
     metodosAplicacao: List[MetodoAplicacaoDTO]
     valorFinanceiro: ValorFinanceiroDTO
+    produtosPorNome: List[ProdutoPorNomeDTO]
+
+
+class ProdutoPorNomeDTO(ItemQuantidadeDTO):
+    produto: str
 
 
 class DistribuicaoProdutosDTO(ItemQuantidadeDTO):
@@ -201,4 +207,3 @@ class CityHeatmapItemDTO(BaseModel):
 class CityHeatmapResponseDTO(BaseModel):
     """DTO de resposta do mapa de calor"""
     data: List[CityHeatmapItemDTO]
-

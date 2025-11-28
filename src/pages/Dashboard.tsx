@@ -145,29 +145,39 @@ function DashboardPage({ company }: DashboardProps) {
               <h3 style={{ margin: 0 }}>Últimos certificados</h3>
               <p style={{ margin: '0.25rem 0 0', color: '#64748b', fontSize: '0.9rem' }}>Visualize rapidamente os registros mais recentes.</p>
             </div>
-            {recent.length > 0 && (
-              <button
-                onClick={() => setIsListVisible(!isListVisible)}
-                style={{
-                  background: 'transparent',
-                  border: 'none',
-                  color: '#2563eb',
-                  cursor: 'pointer',
-                  fontWeight: 600,
-                  fontSize: '0.9rem',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.25rem',
-                  padding: '0.5rem'
-                }}
+            <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+              {recent.length > 0 && (
+                <button
+                  onClick={() => setIsListVisible(!isListVisible)}
+                  style={{
+                    background: 'transparent',
+                    border: 'none',
+                    color: '#2563eb',
+                    cursor: 'pointer',
+                    fontWeight: 600,
+                    fontSize: '0.9rem',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.25rem',
+                    padding: '0.5rem'
+                  }}
+                >
+                  {isListVisible ? (
+                    <>Minimizar <span style={{ fontSize: '0.8rem' }}>▲</span></>
+                  ) : (
+                    <>Ver últimos 5 <span style={{ fontSize: '0.8rem' }}>▼</span></>
+                  )}
+                </button>
+              )}
+              <a
+                href={`${import.meta.env.VITE_API_BASE_URL?.replace(/\/+$/, '') || 'http://127.0.0.1:8000'}/certificados/planilha`}
+                className="download-link"
+                style={{ fontSize: '0.85rem', padding: '0.4rem 0.8rem', background: '#2563eb' }}
+                download
               >
-                {isListVisible ? (
-                  <>Minimizar <span style={{ fontSize: '0.8rem' }}>▲</span></>
-                ) : (
-                  <>Ver últimos 5 <span style={{ fontSize: '0.8rem' }}>▼</span></>
-                )}
-              </button>
-            )}
+                Baixar planilha consolidada
+              </a>
+            </div>
           </header>
 
           {isListVisible && (
@@ -195,36 +205,7 @@ function DashboardPage({ company }: DashboardProps) {
                           <span>{String(row.certificado?.cidade || 'Cidade não inf.')}</span>
                         </div>
                       </div>
-                      <div className="download-links" style={{ margin: 0, gap: '0.5rem' }}>
-                        {row.urls?.detalhes && (
-                          <button
-                            type="button"
-                            onClick={() => navigate('/dados-pdfs')}
-                            style={{
-                              background: 'transparent',
-                              border: '1px solid #cbd5e1',
-                              borderRadius: '8px',
-                              padding: '0.4rem 0.8rem',
-                              fontSize: '0.85rem',
-                              fontWeight: 600,
-                              color: '#475569',
-                              cursor: 'pointer'
-                            }}
-                          >
-                            Ver dados
-                          </button>
-                        )}
-                        {row.urls?.pdf && (
-                          <a href={row.urls.pdf} className="download-link" style={{ fontSize: '0.85rem', padding: '0.4rem 0.8rem', background: '#15803d' }} download>
-                            PDF
-                          </a>
-                        )}
-                        {row.urls?.planilha && (
-                          <a href={row.urls.planilha} className="download-link" style={{ fontSize: '0.85rem', padding: '0.4rem 0.8rem', background: '#2563eb' }} download>
-                            Planilha
-                          </a>
-                        )}
-                      </div>
+                      {/* Ações removidas temporariamente: botões Ver dados e PDF */}
                     </li>
                   ))}
                 </ul>
@@ -239,4 +220,3 @@ function DashboardPage({ company }: DashboardProps) {
 }
 
 export default DashboardPage
-

@@ -6,6 +6,16 @@ import type { UploadExcelResult } from '../lib/backend'
 import '../App.css'
 
 const COMPANY_NAME = 'ServeImuni'
+const formatCNPJ = (v: string) => {
+  const s = v.replace(/\D/g, '').slice(0, 14)
+  let r = ''
+  if (s.length > 0) r = s.slice(0, 2)
+  if (s.length >= 3) r += '.' + s.slice(2, 5)
+  if (s.length >= 6) r += '.' + s.slice(5, 8)
+  if (s.length >= 9) r += '/' + s.slice(8, 12)
+  if (s.length >= 13) r += '-' + s.slice(12, 14)
+  return r
+}
 
 type Produto = {
   nome_produto: string
@@ -122,11 +132,21 @@ function ManualFormPage() {
       setStatus('success')
     } catch (error) {
       console.error('Falha ao criar certificado', error)
-      setErrorMessage(
-        error instanceof Error
-          ? error.message
-          : 'Não foi possível criar o certificado. Verifique os dados e tente novamente.',
-      )
+      // Normaliza mensagens conhecidas para PT-BR
+      const normalize = (msg: string) => {
+        const lower = msg.toLowerCase()
+        if (lower.includes('invalid or missing cnpj')) return 'CNPJ inválido ou ausente.'
+        if (lower.includes('missing field') && lower.includes('numero_certificado')) return 'Número do certificado é obrigatório.'
+        if (lower.includes('missing field') && lower.includes('numero_licenca')) return 'Número da licença é obrigatório.'
+        if (lower.includes('data_execucao')) return 'Informe a data de execução.'
+        if (lower.includes('data_validade')) return 'Informe a data de validade.'
+        return msg
+      }
+
+      const message = error instanceof Error
+        ? normalize(error.message)
+        : 'Não foi possível criar o certificado. Verifique os dados e tente novamente.'
+      setErrorMessage(message)
       setStatus('error')
     }
   }
@@ -204,7 +224,10 @@ function ManualFormPage() {
                   id="cnpj"
                   type="text"
                   value={formData.cnpj}
-                  onChange={(e) => handleInputChange('cnpj', e.target.value)}
+                  onChange={(e) => handleInputChange('cnpj', formatCNPJ(e.target.value))}
+                  inputMode="numeric"
+                  maxLength={18}
+                  placeholder="00.000.000/0000-00"
                   required
                   disabled={status === 'loading'}
                 />

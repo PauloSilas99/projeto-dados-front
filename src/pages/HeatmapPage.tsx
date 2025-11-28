@@ -7,6 +7,8 @@ import 'leaflet.heat'
 import '../App.css'
 
 const COMPANY_NAME = 'ServeImuni'
+const HEATMAP_CACHE_KEY = 'heatmap_cache_v1'
+const HEATMAP_CACHE_TTL_MS = Number(import.meta.env.VITE_HEATMAP_CACHE_TTL_MS || 12 * 60 * 60 * 1000)
 
 type HeatmapItem = {
     city: string
@@ -26,17 +28,35 @@ function HeatmapPage() {
     const mapContainerRef = useRef<HTMLDivElement>(null)
 
     useEffect(() => {
+        const now = Date.now()
+        try {
+            const raw = localStorage.getItem(HEATMAP_CACHE_KEY)
+            if (raw) {
+                const cached = JSON.parse(raw)
+                if (cached && Array.isArray(cached.data) && typeof cached.ts === 'number') {
+                    if (now - cached.ts < HEATMAP_CACHE_TTL_MS) {
+                        setData(cached.data)
+                        setLoading(false)
+                    }
+                }
+            }
+        } catch { }
+
         fetch('http://localhost:8000/dashboard/heatmap')
             .then((res) => res.json())
             .then((json) => {
                 if (json.sucesso) {
-                    setData(json.data.data || [])
+                    const payload = json.data?.data || []
+                    setData(payload)
+                    try {
+                        localStorage.setItem(HEATMAP_CACHE_KEY, JSON.stringify({ ts: now, data: payload }))
+                    } catch { }
                 } else {
-                    setError(json.message || 'Erro ao carregar dados')
+                    if (!data.length) setError(json.message || 'Erro ao carregar dados')
                 }
             })
             .catch((err) => {
-                setError(err.message)
+                if (!data.length) setError(err.message)
             })
             .finally(() => setLoading(false))
     }, [])
@@ -59,30 +79,29 @@ function HeatmapPage() {
             maxZoom: 19,
         }).addTo(map)
 
-        // Prepara dados para o heatmap: [lat, lng, intensity]
+        const maxCount = Math.max(...validPoints.map((p) => p.count)) || 1
         const heatData = validPoints.map((point) => {
-            // Normaliza a intensidade (0.3 = mínimo visível, 1.0 = máximo)
-            const maxCount = Math.max(...validPoints.map((p) => p.count))
-            const intensity = 0.3 + (point.count / maxCount) * 0.7
+            const intensity = 0.25 + (point.count / maxCount) * 0.75
             return [point.lat!, point.long!, intensity] as [number, number, number]
         })
 
         // @ts-ignore - leaflet.heat não tem types oficiais
         L.heatLayer(heatData, {
-            radius: 25,
-            blur: 15,
-            maxZoom: 10,
+            radius: 40,
+            blur: 30,
+            maxZoom: 12,
             max: 1.0,
+            minOpacity: 0.25,
             gradient: {
-                0.0: 'blue',
-                0.3: 'cyan',
-                0.5: 'lime',
-                0.7: 'yellow',
-                1.0: 'red',
+                0.0: 'rgba(14, 165, 233, 0)',
+                0.3: 'rgba(56, 189, 248, 0.35)',
+                0.6: 'rgba(34, 197, 94, 0.55)',
+                0.8: 'rgba(250, 204, 21, 0.65)',
+                1.0: 'rgba(239, 68, 68, 0.75)',
             },
         }).addTo(map)
-
-        // Adiciona marcadores com popups
+        // Camada de marcadores (apenas em zoom amplo: país/estado/cidade)
+        const markersLayer = L.layerGroup().addTo(map)
         validPoints.forEach((point) => {
             const marker = L.circleMarker([point.lat!, point.long!], {
                 radius: 6,
@@ -90,17 +109,29 @@ function HeatmapPage() {
                 color: '#fff',
                 weight: 2,
                 opacity: 1,
-                fillOpacity: 0.8,
-            }).addTo(map)
-
-            marker.bindPopup(`
-        <div style="font-family: sans-serif;">
-          <strong>${point.city}</strong><br/>
-          <em>${point.bairro || 'Bairro não especificado'}</em><br/>
-          <span style="color: #2563eb; font-weight: 600;">${point.count} certificado${point.count > 1 ? 's' : ''}</span>
-        </div>
-      `)
+                fillOpacity: 0.85,
+            })
+            marker.bindPopup(
+                `<div style="font-family: sans-serif;">
+                  <strong>${point.city}</strong><br/>
+                  <em>${point.bairro || 'Bairro não especificado'}</em><br/>
+                  <span style="color: #2563eb; font-weight: 600;">${point.count} certificado${point.count > 1 ? 's' : ''}</span>
+                </div>`
+            )
+            marker.addTo(markersLayer)
         })
+        // Atualiza visibilidade dos marcadores conforme zoom
+        const updateMarkersVisibility = () => {
+            const z = map.getZoom()
+            // Mostrar pontos até nível de cidade (~<= 11); ocultar em bairros (> 11)
+            if (z <= 11) {
+                if (!map.hasLayer(markersLayer)) map.addLayer(markersLayer)
+            } else {
+                if (map.hasLayer(markersLayer)) map.removeLayer(markersLayer)
+            }
+        }
+        updateMarkersVisibility()
+        map.on('zoomend', updateMarkersVisibility)
 
         // Ajusta zoom para mostrar todos os pontos
         if (validPoints.length > 0) {
@@ -109,6 +140,7 @@ function HeatmapPage() {
         }
 
         return () => {
+            map.off('zoomend', updateMarkersVisibility)
             map.remove()
             mapRef.current = null
         }
@@ -198,7 +230,7 @@ function HeatmapPage() {
                             />
 
                             <p style={{ fontSize: '0.85rem', color: '#64748b', marginTop: '1rem' }}>
-                                💡 <strong>Dica:</strong> Clique nos marcadores para ver detalhes. A intensidade da cor indica a concentração de certificados.
+                                💡 <strong>Dica:</strong> A intensidade da cor indica a concentração de certificados; áreas mais fortes representam maior densidade.
                             </p>
                         </section>
 

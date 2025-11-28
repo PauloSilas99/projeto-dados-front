@@ -49,6 +49,7 @@ class DownloadPdfUseCase:
         if not cert_entity:
             raise CertificadoNotFoundError(identifier=id)
               
+        # Tenta localizar por nome + número para evitar colisões
         pdf_path = await asyncio.to_thread(self.repository.get_pdf_path, cert_entity.numero_certificado)
         
         if not pdf_path:

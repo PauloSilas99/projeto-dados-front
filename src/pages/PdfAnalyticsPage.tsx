@@ -84,15 +84,15 @@ const CHART_COLORS = [
 function ChartSection({ title, description, data, variant = 'column', height = 260, actionButton }: ChartSectionProps) {
   const { theme } = useTheme()
   const isDark = theme === 'dark'
-  
+
   // Ordenar dados para barras horizontais (Lei da Similaridade - ranking visual)
-  const sortedData = variant === 'bar' 
+  const sortedData = variant === 'bar'
     ? [...data].sort((a, b) => b.value - a.value)
     : data
 
   // Calcular total para donut (Lei do Fechamento)
   const total = data.reduce((sum, item) => sum + item.value, 0)
-  
+
   // Cores adaptativas para tema claro/escuro
   const textColor = isDark ? '#e5e7eb' : '#0f172a'
   const subTextColor = isDark ? '#9ca3af' : '#64748b'
@@ -365,8 +365,8 @@ function ChartSection({ title, description, data, variant = 'column', height = 2
                 maxBarSize={28}
               >
                 {sortedData.map((_, index) => (
-                  <Cell 
-                    key={`cell-${index}`} 
+                  <Cell
+                    key={`cell-${index}`}
                     fill={CHART_COLORS[index % CHART_COLORS.length]}
                     opacity={1 - (index * 0.06)} /* Gradiente visual para ranking */
                   />
@@ -644,6 +644,17 @@ function PdfAnalyticsPage() {
         height: 320,
       },
       {
+        // Produtos por nome: ranking dos produtos mais usados
+        title: 'Produtos mais usados',
+        description: 'Comparação dos produtos aplicados por frequência.',
+        data: (overview.produtosPorNome || []).map((item) => ({
+          label: item.produto,
+          value: item.quantidade,
+        })),
+        variant: 'bar' as ChartVariant,
+        height: 320,
+      },
+      {
         // Lei do Fechamento: Donut com total central para proporção do todo
         title: 'Classes químicas',
         description: 'Proporção dos produtos por categoria.',
@@ -673,7 +684,7 @@ function PdfAnalyticsPage() {
       <AppHeader companyName={COMPANY_NAME} />
       <header className="analytics__header">
         <div className="analytics__header-content">
-        <div>
+          <div>
             <h2>Dados Estatísticos</h2>
             <p>
               Consulte o panorama geral dos certificados emitidos e investigue indicadores específicos puxando um número de
@@ -832,7 +843,7 @@ function PdfAnalyticsPage() {
                 <h3>Certificados Disponíveis</h3>
                 {loadingCertificadosLista && <span className="loading-text">Carregando...</span>}
               </div>
-              
+
               {loadingCertificadosLista ? (
                 <div className="certificados-lista-loading">
                   <p>Carregando lista de certificados...</p>
@@ -846,41 +857,41 @@ function PdfAnalyticsPage() {
                   {certificadosDisponiveis.map((row, index) => {
                     // Garantir que temos um certificado válido
                     const certificado = row?.certificado || row || {}
-                    
+
                     // Extrair ID - tentar múltiplas chaves possíveis
                     const certificadoId = String(
-                      certificado.id || 
-                      certificado.certificado_id || 
+                      certificado.id ||
+                      certificado.certificado_id ||
                       certificado.certificadoId ||
                       index
                     )
-                    
+
                     // Extrair razão social - tentar múltiplas chaves possíveis
                     const razaoSocial = String(
-                      certificado.razao_social || 
-                      certificado.razaoSocial || 
+                      certificado.razao_social ||
+                      certificado.razaoSocial ||
                       certificado.nome ||
                       certificado.empresa ||
                       certificado.cliente ||
                       'Sem nome'
                     )
-                    
+
                     // Extrair cidade
                     const cidade = String(
-                      certificado.cidade || 
+                      certificado.cidade ||
                       certificado.municipio ||
                       'Cidade não informada'
                     )
-                    
+
                     // Extrair bairro
                     const bairro = String(
-                      certificado.bairro || 
+                      certificado.bairro ||
                       'Bairro não informado'
                     )
-                    
+
                     // Extrair número do certificado se disponível
                     const numeroCertificado = certificado.numero || certificado.numero_certificado || certificado.numeroCertificado
-                    
+
                     return (
                       <button
                         key={`${certificadoId}-${index}`}
@@ -912,60 +923,60 @@ function PdfAnalyticsPage() {
             )}
 
             {certificadoData && (
-            <div className="certificado-panels">
-              <article className="certificado-details">
-                <h3>Dados principais</h3>
-                <dl>
-                  {Object.entries(certificadoData.certificado).map(([key, value]) => (
-                    <Fragment key={key}>
-                      <dt>{key}</dt>
-                      <dd>{String(value)}</dd>
-                    </Fragment>
-                  ))}
-                </dl>
-              </article>
-
-              {(window as any).__certificadoCandidatos && Array.isArray((window as any).__certificadoCandidatos) && (
+              <div className="certificado-panels">
                 <article className="certificado-details">
-                  <h3>Candidatos (IDs para seleção)</h3>
-                  <ul>
-                    {((window as any).__certificadoCandidatos as Array<any>).map((c: any) => (
-                      <li key={String(c.id)}>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setIdBusca(String(c.id))
-                              ; (window as any).__certificadoCandidatos = null
-                            handleBuscarCertificado()
-                          }}
-                        >
-                          ID: {String(c.id)} — Nº: {String(c.numero)} — CNPJ: {String(c.cnpj)} — Execução: {String(c.data_execucao)}
-                        </button>
-                      </li>
+                  <h3>Dados principais</h3>
+                  <dl>
+                    {Object.entries(certificadoData.certificado).map(([key, value]) => (
+                      <Fragment key={key}>
+                        <dt>{key}</dt>
+                        <dd>{String(value)}</dd>
+                      </Fragment>
                     ))}
-        </ul>
+                  </dl>
                 </article>
-              )}
+
+                {(window as any).__certificadoCandidatos && Array.isArray((window as any).__certificadoCandidatos) && (
+                  <article className="certificado-details">
+                    <h3>Candidatos (IDs para seleção)</h3>
+                    <ul>
+                      {((window as any).__certificadoCandidatos as Array<any>).map((c: any) => (
+                        <li key={String(c.id)}>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setIdBusca(String(c.id))
+                                ; (window as any).__certificadoCandidatos = null
+                              handleBuscarCertificado()
+                            }}
+                          >
+                            ID: {String(c.id)} — Nº: {String(c.numero)} — CNPJ: {String(c.cnpj)} — Execução: {String(c.data_execucao)}
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  </article>
+                )}
 
 
-              <ChartSection
-                title="Produtos por classe química"
-                variant="bar"
-                height={320}
-                data={certificadoData.distribuicaoProdutos.map((item) => ({
-                  label: item.classe,
-                  value: item.quantidade,
-                }))}
-              />
+                <ChartSection
+                  title="Produtos por classe química"
+                  variant="bar"
+                  height={320}
+                  data={certificadoData.distribuicaoProdutos.map((item) => ({
+                    label: item.classe,
+                    value: item.quantidade,
+                  }))}
+                />
 
-              <ChartSection
-                title="Métodos utilizados"
-                data={certificadoData.distribuicaoMetodos.map((item) => ({
-                  label: item.metodo,
-                  value: item.quantidade,
-                }))}
-              />
-            </div>
+                <ChartSection
+                  title="Métodos utilizados"
+                  data={certificadoData.distribuicaoMetodos.map((item) => ({
+                    label: item.metodo,
+                    value: item.quantidade,
+                  }))}
+                />
+              </div>
             )}
           </div>
         </section>
@@ -992,7 +1003,7 @@ function PdfAnalyticsPage() {
               Abrir Mapa Interativo
             </button>
           </div>
-      </section>
+        </section>
       )}
 
     </div>
@@ -1000,5 +1011,4 @@ function PdfAnalyticsPage() {
 }
 
 export default PdfAnalyticsPage
-
 

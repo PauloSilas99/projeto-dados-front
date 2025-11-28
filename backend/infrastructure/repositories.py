@@ -34,6 +34,11 @@ class FileCertificadoRepository(CertificadoRepository):
         bundle = self.pdf_engine.get_bundle_by_numero(numero)
         if not bundle:
             return None
+        # Tenta localizar especificamente pelo certificado do bundle
+        path = pdf_service.find_existing_pdf_for_cert(bundle.certificado, self.pdf_engine)
+        if path:
+            return path
+        # Fallback para busca com bundle
         return pdf_service.find_existing_pdf(bundle, self.pdf_engine)
 
     def get_consolidated_spreadsheet_path(self) -> Path:
@@ -41,7 +46,6 @@ class FileCertificadoRepository(CertificadoRepository):
 
     def _to_entity(self, engine_cert: Any) -> CertificadoEntity:
         d = engine_cert.to_dict()
-        print(f"DEBUG REPO: {d}")
         return CertificadoEntity(
             id=str(d.get("id", "")),
             numero_certificado=str(d.get("numero_certificado", "")),

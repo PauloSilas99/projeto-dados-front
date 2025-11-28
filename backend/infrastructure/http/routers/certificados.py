@@ -64,6 +64,7 @@ async def upload_excel(arquivo: UploadFile = File(...)) -> Dict[str, Any]:
     return await _controller.upload_excel(arquivo)
 
 
+
 @router.get("/{id}")
 async def obter_por_id(id: str) -> Dict[str, Any]:
     """Endpoint: Obter certificado por ID"""
@@ -97,4 +98,17 @@ async def baixar_planilha_por_id(id: str):
         )
     
     # Se retornou Dict, é erro
+    return result
+
+
+@router.get("/planilha", response_model=None)
+async def baixar_planilha_global():
+    """Endpoint: Baixar planilha consolidada global (atualizada)"""
+    result = await _controller.baixar_planilha_global()
+    if isinstance(result, Path):
+        return FileResponse(
+            path=result,
+            filename=result.name,
+            media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        )
     return result

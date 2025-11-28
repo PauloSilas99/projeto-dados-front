@@ -4,6 +4,7 @@ Operações de PDF que fazem parte da lógica de negócio
 """
 from pathlib import Path
 from typing import Any, Optional
+import unicodedata
 
 from backend.domain.services.pdf_engine import PdfEngine
 from backend.domain.exceptions import CertificadoNotFoundError, PdfGenerationError
@@ -61,6 +62,31 @@ def ensure_pdf(bundle: Any, pdf_engine: PdfEngine) -> Path:
             certificado_numero=bundle.certificado.numero_certificado,
             details=str(e)
         )
+
+
+def find_existing_pdf_for_cert(cert: Any, pdf_engine: PdfEngine) -> Optional[Path]:
+    data = cert.to_dict() if hasattr(cert, "to_dict") else cert
+    numero = str(data.get("numero_certificado", ""))
+    nome = str(data.get("razao_social", ""))
+
+    def norm(s: str) -> str:
+        s = unicodedata.normalize("NFKD", s)
+        s = "".join([c for c in s if not unicodedata.combining(c)])
+        return s.lower()
+
+    numero_sanitizado = numero.replace("/", "-")
+    name_token_dash = norm(nome).replace(" ", "-")
+    name_token_space = norm(nome)
+
+    pdf_generator = pdf_engine.get_pdf_generator()
+    candidates = sorted(pdf_generator.output_dir.glob(f"*{numero_sanitizado}*.pdf"))
+    for p in candidates:
+        fname = norm(p.name)
+        if name_token_dash and name_token_dash in fname:
+            return p
+        if name_token_space and name_token_space in fname:
+            return p
+    return candidates[0] if candidates else None
 
 
 def load_cert_by_id(cert_id: str, pdf_engine: PdfEngine) -> Any:

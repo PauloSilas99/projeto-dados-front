@@ -8,7 +8,7 @@ type AppHeaderProps = {
 }
 
 export default function AppHeader({ companyName, showWelcome = false }: AppHeaderProps) {
-  const { theme, toggleTheme } = useTheme()
+  const { theme } = useTheme()
   const location = useLocation()
   const navigate = useNavigate()
   const isDashboard = location.pathname === '/dashboard'
@@ -45,43 +45,7 @@ export default function AppHeader({ companyName, showWelcome = false }: AppHeade
             <span>Home</span>
           </Link>
         )}
-        <button
-          type="button"
-          className="app-header__theme-btn"
-          onClick={toggleTheme}
-          title={theme === 'light' ? 'Ativar tema escuro' : 'Ativar tema claro'}
-          aria-label={theme === 'light' ? 'Ativar tema escuro' : 'Ativar tema claro'}
-        >
-          {theme === 'light' ? (
-            <svg
-              width="20"
-              height="20"
-              viewBox="0 0 20 20"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path
-                d="M10 3V1M10 19V17M17 10H19M1 10H3M15.657 15.657L16.97 16.97M3.03 3.03L4.343 4.343M15.657 4.343L16.97 3.03M3.03 16.97L4.343 15.657M14 10C14 12.2091 12.2091 14 10 14C7.79086 14 6 12.2091 6 10C6 7.79086 7.79086 6 10 6C12.2091 6 14 7.79086 14 10Z"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
-          ) : (
-            <svg
-              width="20"
-              height="20"
-              viewBox="0 0 20 20"
-              fill="currentColor"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path
-                d="M17.293 13.293C16.3782 14.2078 15.278 14.8481 14.095 15.1629C12.912 15.4777 11.6842 15.4589 10.5161 15.1087C9.34805 14.7584 8.28124 14.0864 7.43257 13.1671C6.5839 12.2478 5.98559 11.1154 5.69588 9.89343C5.40618 8.67146 5.43414 7.40026 5.77747 6.19246C6.1208 4.98466 6.76818 3.88279 7.66039 2.99988C8.5526 2.11698 9.66003 1.48528 10.8712 1.16773C12.0823 0.850189 13.355 0.857891 14.562 1.18988C15.769 1.52186 16.869 2.16891 17.773 3.06388C18.677 3.95885 19.354 5.07034 19.738 6.28988C19.904 6.90688 19.999 7.54588 20 8.18988C20 8.83388 19.905 9.47288 19.738 10.0899C19.571 10.7069 19.333 11.3019 19.031 11.8619C18.729 12.4219 18.365 12.9419 17.949 13.4099L17.293 13.293Z"
-              />
-            </svg>
-          )}
-        </button>
+        {/* Botão de tema removido temporariamente */}
         <button
           type="button"
           className="app-header__user-btn"
@@ -110,4 +74,3 @@ export default function AppHeader({ companyName, showWelcome = false }: AppHeade
     </section>
   )
 }
-

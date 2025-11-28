@@ -6,8 +6,9 @@ from backend.domain.repositories import CertificadoRepository
 from backend.application.dtos import CertificadoListItemDTO
 
 class ListCertificatesUseCase:
-    def __init__(self, repository: CertificadoRepository):
+    def __init__(self, repository: CertificadoRepository, logger=None):
         self.repository = repository
+        self.logger = logger
 
     async def execute(
         self,
@@ -19,6 +20,7 @@ class ListCertificatesUseCase:
         limit: int = 100,
         offset: int = 0,
     ) -> List[CertificadoListItemDTO]:
+        if self.logger: self.logger.info("list_certs_filters", id=id, bairro=bairro, cidade=cidade, min_valor=min_valor, max_valor=max_valor, limit=limit, offset=offset)
         certificados = await asyncio.to_thread(self.repository.list)
         
         filtrados: List[Dict[str, Any]] = []
@@ -67,6 +69,7 @@ class ListCertificatesUseCase:
             
         respostas: List[CertificadoListItemDTO] = []
         page_items = filtrados[offset : offset + max(0, limit)]
+        if self.logger: self.logger.debug("list_certs_counts", total=len(certificados), filtrados=len(filtrados), page=len(page_items))
         
         for data in page_items:
             numero = str(data.get("numero_certificado", ""))
@@ -76,6 +79,7 @@ class ListCertificatesUseCase:
                     id=str(data.get("id", "")),
                     numero_certificado=numero,
                     razao_social=str(data.get("razao_social", "")),
+                    bairro=str(data.get("bairro", "")),
                     cidade=str(data.get("cidade", "")),
                     valor=data.get("valor"),
                     data_execucao=data.get("data_execucao"),
